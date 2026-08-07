@@ -459,7 +459,7 @@
         <span class="time">${humanTime(c.start)}<br>${humanTime(c.end)}</span><span class="dot"></span>
         <span><strong>${esc(displayClass(c,iso))}</strong><small>Period ${c.period} · ${esc(c.teacher)} · ${esc(c.room)}</small></span><span class="pill">P${c.period}</span>
       </div>${c.period===4?'<div class="schedule-row" style="--class-color:#5d6b7f"><span class="time">11:56 AM<br>12:26 PM</span><span class="dot"></span><span><strong>7th Grade Lunch</strong><small>30 minutes</small></span><span class="pill">Lunch</span></div>':''}`).join('');
-      return limit ? state.classes.slice(0,4).map(c=>`<div class="schedule-row" style="--class-color:${esc(c.color)}"><span class="time">${humanTime(c.start)}</span><span class="dot"></span><span><strong>${esc(displayClass(c,iso))}</strong><small>P${c.period} · ${esc(c.room)}</small></span></div>`).join('') : rows;
+      return rows;
     }
     function getStreak(){
       const days=new Set(state.assignments.filter(a=>a.completed&&a.completedDate).map(a=>a.completedDate)); let streak=0, d=localISO();
