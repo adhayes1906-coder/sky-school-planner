@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#163b72">
+  <title>Sky's School Planner</title>
+  <style>
+    :root {
+      --navy:#163b72; --navy-2:#0d2b58; --red:#a62126; --blue:#2f6fed;
+      --ink:#172033; --muted:#667085; --line:#dce3ee; --soft:#f2f6fb;
+      --card:#fff; --bg:#edf3f9; --success:#16865c; --warn:#b76b00; --danger:#c23434;
+      --shadow:0 10px 30px rgba(22,59,114,.09); --radius:18px; --text-size:16px;
+    }
+    * { box-sizing:border-box; }
+    html { font-size:var(--text-size); }
+    body { margin:0; min-height:100vh; color:var(--ink); background:var(--bg); font-family:Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+    button, input, select, textarea { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:3px solid rgba(47,111,237,.35); outline-offset:2px; }
+    a { color:var(--blue); }
+    .app { min-height:100vh; }
+    .topbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:16px; min-height:78px; padding:13px clamp(16px,4vw,44px); color:#fff; background:linear-gradient(120deg,var(--navy-2),var(--navy) 58%,#24569c); box-shadow:0 6px 20px rgba(13,43,88,.2); }
+    .brand-mark { display:grid; place-items:center; width:48px; height:48px; flex:none; border-radius:15px; font-size:25px; background:#fff; color:var(--navy); box-shadow:inset 0 -4px 0 rgba(166,33,38,.16); }
+    .brand { min-width:0; }
+    .brand h1 { margin:0; font-size:clamp(1.1rem,2.4vw,1.45rem); line-height:1.15; }
+    .brand p { margin:4px 0 0; font-size:.82rem; color:#dce9fb; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .top-actions { margin-left:auto; display:flex; gap:8px; }
+    .icon-btn { min-height:42px; padding:9px 12px; border:1px solid rgba(255,255,255,.28); border-radius:12px; background:rgba(255,255,255,.1); color:#fff; }
+    .layout { display:grid; grid-template-columns:210px minmax(0,1fr); max-width:1600px; margin:0 auto; }
+    .nav { position:sticky; top:78px; align-self:start; height:calc(100vh - 78px); padding:22px 14px; border-right:1px solid var(--line); background:rgba(255,255,255,.72); backdrop-filter:blur(14px); }
+    .nav button { display:flex; align-items:center; gap:10px; width:100%; padding:12px 13px; margin:3px 0; border:0; border-radius:12px; text-align:left; color:#3b4960; background:transparent; font-weight:700; }
+    .nav button:hover { background:#eaf1fb; }
+    .nav button.active { color:var(--navy); background:#dce9fb; }
+    .nav .nav-icon { width:22px; text-align:center; }
+    .school-chip { margin-top:18px; padding:13px; border:1px solid var(--line); border-radius:14px; background:var(--card); font-size:.76rem; color:var(--muted); line-height:1.45; }
+    .school-chip strong { display:block; margin-bottom:4px; color:var(--ink); }
+    main { width:100%; min-width:0; padding:clamp(18px,3vw,34px); }
+    .page { display:none; animation:fade .18s ease; }
+    .page.active { display:block; }
+    @keyframes fade { from { opacity:.35; transform:translateY(4px); } }
+    .page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:22px; }
+    .page-head h2 { margin:0; font-size:clamp(1.45rem,3vw,2rem); letter-spacing:-.03em; }
+    .page-head p { margin:6px 0 0; color:var(--muted); }
+    .grid { display:grid; gap:16px; }
+    .grid.two { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .grid.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .dashboard { grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr); }
+    .stack { display:grid; gap:16px; align-content:start; }
+    .card { border:1px solid rgba(206,217,232,.9); border-radius:var(--radius); background:var(--card); box-shadow:var(--shadow); }
+    .card-pad { padding:18px; }
+    .card h3 { margin:0; font-size:1rem; }
+    .card-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .card-title p { margin:3px 0 0; color:var(--muted); font-size:.8rem; }
+    .hero { overflow:hidden; padding:22px; color:#fff; background:linear-gradient(130deg,var(--navy-2),var(--navy) 58%,#2e69bb); }
+    .hero-grid { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:18px; align-items:center; }
+    .eyebrow { margin:0 0 8px; color:#d6e6fb; font-size:.78rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    .hero h2 { margin:0; font-size:clamp(1.45rem,3vw,2.25rem); }
+    .hero p { margin:9px 0 0; max-width:620px; color:#dce9fb; }
+    .date-badge { min-width:112px; padding:15px; border:1px solid rgba(255,255,255,.24); border-radius:18px; text-align:center; background:rgba(255,255,255,.1); }
+    .date-badge .big { display:block; font-size:2rem; font-weight:900; }
+    .date-badge .small { font-size:.76rem; color:#e5effd; text-transform:uppercase; }
+    .quick-add { display:grid; grid-template-columns:minmax(160px,1.6fr) minmax(145px,.8fr) 145px 92px auto; gap:9px; }
+    input, select, textarea { width:100%; min-height:42px; border:1px solid #cbd5e2; border-radius:11px; padding:9px 11px; color:var(--ink); background:#fff; }
+    textarea { min-height:92px; resize:vertical; }
+    label { display:grid; gap:6px; color:#475467; font-size:.78rem; font-weight:800; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:42px; padding:9px 14px; border:0; border-radius:11px; font-weight:800; background:var(--navy); color:#fff; }
+    .btn:hover { filter:brightness(1.08); }
+    .btn.secondary { border:1px solid #cdd8e6; background:#fff; color:var(--navy); }
+    .btn.soft { background:#e7effa; color:var(--navy); }
+    .btn.danger { background:#feecec; color:#a32626; }
+    .btn.small { min-height:34px; padding:6px 10px; font-size:.76rem; }
+    .btn.wide { width:100%; }
+    .pill { display:inline-flex; align-items:center; gap:5px; padding:5px 9px; border-radius:999px; background:#edf2f7; color:#4b596f; font-size:.69rem; font-weight:850; }
+    .pill.red { background:#ffeded; color:#ad2929; }
+    .pill.gold { background:#fff1d7; color:#925600; }
+    .pill.green { background:#e5f7ef; color:#0e744d; }
+    .pill.blue { background:#e7efff; color:#2458b5; }
+    .empty { padding:20px; border:1px dashed #c8d3e2; border-radius:14px; text-align:center; color:var(--muted); background:#f9fbfd; }
+    .empty strong { display:block; margin-bottom:4px; color:var(--ink); }
+    .priority-list, .compact-list { display:grid; gap:9px; }
+    .priority-item { position:relative; display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:11px; align-items:center; padding:12px; border:1px solid var(--line); border-left:5px solid var(--class-color,var(--blue)); border-radius:13px; background:#fff; }
+    .priority-number { display:grid; place-items:center; width:29px; height:29px; border-radius:9px; color:#fff; background:var(--navy); font-weight:900; }
+    .item-main { min-width:0; }
+    .item-main strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .item-main small { display:block; margin-top:3px; color:var(--muted); }
+    .check { width:21px; height:21px; accent-color:var(--success); }
+    .schedule-list { display:grid; gap:7px; }
+    .schedule-row { display:grid; grid-template-columns:86px 9px minmax(0,1fr) auto; gap:10px; align-items:center; padding:9px 10px; border-radius:12px; background:#f7f9fc; }
+    .schedule-row.current { background:#e8f1ff; box-shadow:inset 0 0 0 2px #8eb6f5; }
+    .schedule-row .time { font-size:.73rem; color:#52627a; font-weight:800; }
+    .schedule-row .dot { width:9px; height:34px; border-radius:9px; background:var(--class-color,var(--blue)); }
+    .schedule-row strong { display:block; font-size:.86rem; }
+    .schedule-row small { color:var(--muted); }
+    .workload { display:grid; gap:10px; }
+    .meter-track, .progress-track { height:10px; overflow:hidden; border-radius:999px; background:#e7edf5; }
+    .meter-fill, .progress-fill { height:100%; border-radius:inherit; background:linear-gradient(90deg,#1d9a67,#e4a11b,#d64242); transition:width .3s ease; }
+    .progress-fill { background:var(--blue); }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .stat { padding:12px 8px; border-radius:13px; text-align:center; background:#f4f7fb; }
+    .stat strong { display:block; font-size:1.35rem; }
+    .stat span { font-size:.68rem; color:var(--muted); }
+    .segmented { display:flex; flex-wrap:wrap; padding:4px; border-radius:12px; background:#e9eef5; }
+    .segmented button { min-height:34px; padding:6px 11px; border:0; border-radius:9px; color:#506078; background:transparent; font-size:.78rem; font-weight:800; }
+    .segmented button.active { color:var(--navy); background:#fff; box-shadow:0 2px 7px rgba(20,40,70,.11); }
+    .calendar-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px; }
+    .calendar-toolbar h3 { min-width:190px; margin:0; text-align:center; }
+    .month-grid { display:grid; grid-template-columns:repeat(7,minmax(90px,1fr)); overflow:auto; border-top:1px solid var(--line); border-left:1px solid var(--line); border-radius:14px; background:#fff; }
+    .weekday { min-width:90px; padding:9px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); text-align:center; color:var(--muted); font-size:.72rem; font-weight:900; text-transform:uppercase; background:#f6f8fb; }
+    .day-cell { min-width:90px; min-height:112px; padding:7px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff; }
+    .day-cell.outside { background:#f8fafc; color:#9aa5b4; }
+    .day-cell.today { box-shadow:inset 0 0 0 3px #84aef0; }
+    .day-number { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:.75rem; font-weight:900; }
+    .cal-item { display:block; width:100%; margin:3px 0; padding:4px 6px; overflow:hidden; border:0; border-left:4px solid var(--event-color,var(--blue)); border-radius:6px; text-align:left; text-overflow:ellipsis; white-space:nowrap; color:#26354a; background:#edf3fb; font-size:.64rem; }
+    .week-grid { display:grid; grid-template-columns:repeat(7,minmax(125px,1fr)); gap:8px; overflow:auto; }
+    .week-day { min-width:125px; min-height:320px; padding:11px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+    .week-day.today { box-shadow:inset 0 0 0 2px #6b9be7; }
+    .week-day h4 { margin:0 0 10px; }
+    .day-agenda { display:grid; gap:10px; }
+    .agenda-row { padding:12px; border-left:5px solid var(--event-color,var(--blue)); border-radius:11px; background:#f6f9fd; }
+    .agenda-row strong { display:block; }
+    .agenda-row small { color:var(--muted); }
+    .filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+    .filter-btn { min-height:36px; padding:7px 12px; border:1px solid var(--line); border-radius:999px; background:#fff; color:#516078; font-size:.76rem; font-weight:850; }
+    .filter-btn.active { border-color:var(--navy); color:#fff; background:var(--navy); }
+    .assignment-list { display:grid; gap:11px; }
+    .assignment-card { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:12px; padding:15px; border:1px solid var(--line); border-left:6px solid var(--class-color,var(--blue)); border-radius:15px; background:#fff; box-shadow:0 4px 15px rgba(21,45,78,.05); }
+    .assignment-card.done { opacity:.7; }
+    .assignment-card.done .assignment-title { text-decoration:line-through; }
+    .assignment-title { margin:0 0 5px; font-size:1rem; }
+    .assignment-meta { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+    .assignment-notes { margin:9px 0 0; color:#59677a; font-size:.82rem; }
+    .assignment-actions { display:flex; gap:5px; align-items:flex-start; }
+    .step-list { display:grid; gap:6px; margin-top:10px; padding:10px; border-radius:10px; background:#f6f8fb; }
+    .step-row { display:flex; gap:8px; align-items:center; font-size:.78rem; }
+    .step-row.done span { text-decoration:line-through; color:var(--muted); }
+    .progress-label { display:flex; justify-content:space-between; margin:10px 0 5px; color:var(--muted); font-size:.7rem; font-weight:800; }
+    .attachment-list { display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; }
+    .attachment { padding:6px 9px; border-radius:8px; background:#edf3fb; font-size:.73rem; }
+    .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .form-grid .full { grid-column:1/-1; }
+    .modal-backdrop { position:fixed; inset:0; z-index:50; display:none; place-items:center; padding:20px; background:rgba(7,21,43,.68); }
+    .modal-backdrop.open { display:grid; }
+    .modal { width:min(760px,100%); max-height:92vh; overflow:auto; border-radius:20px; background:#fff; box-shadow:0 30px 80px rgba(0,0,0,.3); }
+    .modal-head { position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--line); background:#fff; }
+    .modal-head h2 { margin:0; font-size:1.2rem; }
+    .modal-body { padding:20px; }
+    .close-btn { width:38px; height:38px; border:0; border-radius:10px; background:#eef2f7; font-size:1.2rem; }
+    .timer { display:grid; place-items:center; min-height:310px; text-align:center; background:radial-gradient(circle at center,#fff 0 52%,#e9f1fb 53% 57%,transparent 58%); }
+    .timer-time { font-size:clamp(3rem,9vw,5.5rem); line-height:1; font-weight:900; letter-spacing:-.07em; color:var(--navy); }
+    .timer-label { margin:10px 0 18px; color:var(--muted); }
+    .timer-actions { display:flex; gap:8px; }
+    .notes-area { min-height:210px; }
+    .grade-table { width:100%; border-collapse:collapse; }
+    .grade-table th, .grade-table td { padding:11px 9px; border-bottom:1px solid var(--line); text-align:left; }
+    .grade-table th { color:var(--muted); font-size:.72rem; text-transform:uppercase; }
+    .grade-score { font-size:1.15rem; font-weight:900; color:var(--navy); }
+    .grade-hidden { padding:44px 20px; text-align:center; }
+    .routine-section { margin-bottom:18px; }
+    .routine-section h3 { margin-bottom:10px; }
+    .routine-list { display:grid; gap:7px; }
+    .routine-item { display:flex; align-items:center; gap:10px; padding:10px 11px; border-radius:11px; background:#f5f8fc; }
+    .routine-item.done span { color:var(--muted); text-decoration:line-through; }
+    .habit-table { display:grid; grid-template-columns:minmax(120px,1fr) repeat(7,38px); gap:6px; align-items:center; }
+    .habit-day { text-align:center; color:var(--muted); font-size:.65rem; font-weight:800; }
+    .habit-check { display:grid; place-items:center; width:36px; height:36px; border:1px solid var(--line); border-radius:10px; background:#fff; color:transparent; }
+    .habit-check.done { border-color:#65bb98; background:#dff4ea; color:#08714a; }
+    .settings-section { padding:18px; border:1px solid var(--line); border-radius:15px; background:#fff; }
+    .settings-section h3 { margin:0 0 12px; }
+    .toggle-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 0; border-bottom:1px solid #edf0f4; }
+    .toggle-row:last-child { border-bottom:0; }
+    .toggle-row strong { display:block; }
+    .toggle-row small { color:var(--muted); }
+    .switch { position:relative; width:48px; height:28px; flex:none; }
+    .switch input { position:absolute; opacity:0; }
+    .switch span { position:absolute; inset:0; border-radius:999px; background:#b9c4d2; transition:.2s; }
+    .switch span:after { content:""; position:absolute; width:22px; height:22px; left:3px; top:3px; border-radius:50%; background:#fff; transition:.2s; box-shadow:0 2px 5px rgba(0,0,0,.2); }
+    .switch input:checked + span { background:var(--blue); }
+    .switch input:checked + span:after { transform:translateX(20px); }
+    .schedule-editor { display:grid; gap:8px; }
+    .editor-row { display:grid; grid-template-columns:52px 1.25fr 1.25fr .75fr .75fr 48px; gap:7px; align-items:end; padding:9px; border:1px solid var(--line); border-radius:12px; }
+    .editor-row input { min-width:0; }
+    .editor-row .period-num { align-self:center; text-align:center; font-weight:900; color:var(--navy); }
+    .color-input { padding:3px; }
+    .toast { position:fixed; z-index:80; right:22px; bottom:22px; max-width:360px; padding:13px 16px; border-radius:12px; color:#fff; background:#162b4b; box-shadow:0 14px 30px rgba(0,0,0,.22); opacity:0; transform:translateY(15px); pointer-events:none; transition:.2s; }
+    .toast.show { opacity:1; transform:none; }
+    .celebration { position:fixed; inset:0; z-index:90; display:none; place-items:center; padding:20px; background:rgba(12,31,61,.72); }
+    .celebration.show { display:grid; }
+    .celebration-box { max-width:430px; padding:32px; border-radius:24px; text-align:center; background:#fff; animation:pop .35s ease; }
+    .celebration-box .emoji { font-size:4rem; }
+    @keyframes pop { from { transform:scale(.75); opacity:0; } }
+    .privacy-note { padding:11px 13px; border-radius:11px; color:#44556d; background:#eef4fb; font-size:.76rem; }
+    .mobile-only { display:none; }
+    body.dark { --ink:#eef4ff; --muted:#a8b4c7; --line:#34435a; --card:#172337; --bg:#0e1828; --soft:#172337; --shadow:0 10px 30px rgba(0,0,0,.18); }
+    body.dark .nav, body.dark input, body.dark select, body.dark textarea, body.dark .btn.secondary, body.dark .month-grid, body.dark .day-cell, body.dark .week-day, body.dark .assignment-card, body.dark .settings-section, body.dark .modal, body.dark .modal-head, body.dark .priority-item { background:#172337; color:var(--ink); }
+    body.dark .schedule-row, body.dark .stat, body.dark .empty, body.dark .step-list, body.dark .routine-item, body.dark .agenda-row { background:#202e43; }
+    body.dark .weekday, body.dark .day-cell.outside { background:#111d2f; }
+    body.dark .filter-btn { background:#172337; color:#d7e1ef; }
+    body.dark .cal-item { color:#e6eef9; background:#263750; }
+    body.high-contrast { --ink:#000; --muted:#202020; --line:#111; --bg:#fff; --card:#fff; --navy:#002c6d; --blue:#004fd1; }
+    body.high-contrast .card, body.high-contrast input, body.high-contrast select, body.high-contrast textarea { border-width:2px; }
+    body.large-text { --text-size:19px; }
+    body.dyslexia { font-family:Verdana, Tahoma, Arial, sans-serif; letter-spacing:.02em; word-spacing:.08em; }
+    body.reduced .school-chip, body.reduced .motivation-only, body.reduced .eyebrow { display:none !important; }
+    body.study-mode .topbar, body.study-mode .nav, body.study-mode .page:not(#study) { display:none !important; }
+    body.study-mode .layout { display:block; max-width:900px; }
+    body.study-mode main { margin:auto; }
+    @media (max-width:1050px) {
+      .dashboard, .grid.three { grid-template-columns:1fr; }
+      .quick-add { grid-template-columns:1fr 1fr 1fr; }
+      .quick-add .qa-title { grid-column:1/-1; }
+      .quick-add .qa-button { grid-column:3; }
+      .editor-row { grid-template-columns:45px 1fr 1fr; }
+    }
+    @media (max-width:780px) {
+      .topbar { min-height:70px; padding:10px 14px; }
+      .brand-mark { width:43px; height:43px; }
+      .top-actions .hide-mobile { display:none; }
+      .layout { display:block; }
+      .nav { position:sticky; top:70px; z-index:18; display:flex; gap:4px; width:100%; height:auto; padding:7px; overflow-x:auto; border-right:0; border-bottom:1px solid var(--line); }
+      .nav button { width:auto; flex:none; margin:0; padding:8px 10px; font-size:.72rem; }
+      .nav .nav-icon { width:auto; }
+      .school-chip { display:none; }
+      main { padding:16px 12px 90px; }
+      .grid.two, .form-grid { grid-template-columns:1fr; }
+      .form-grid .full { grid-column:auto; }
+      .hero-grid { grid-template-columns:1fr; }
+      .date-badge { display:none; }
+      .quick-add { grid-template-columns:1fr 1fr; }
+      .quick-add .qa-title { grid-column:1/-1; }
+      .quick-add .qa-button { grid-column:auto; }
+      .assignment-card { grid-template-columns:auto minmax(0,1fr); }
+      .assignment-actions { grid-column:2; }
+      .stats { grid-template-columns:repeat(3,1fr); }
+      .page-head { align-items:flex-start; }
+      .page-head .btn { flex:none; }
+      .mobile-only { display:block; }
+      .habit-table { grid-template-columns:minmax(100px,1fr) repeat(7,32px); gap:4px; overflow:auto; }
+      .habit-check { width:30px; height:30px; }
+    }
+    @media print {
+      .topbar, .nav, button, .quick-add, .no-print { display:none !important; }
+      .layout { display:block; }
+      main { padding:0; }
+      .page { display:none !important; }
+      .page.active { display:block !important; }
+      .card { box-shadow:none; break-inside:avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand-mark" id="brandMark" aria-hidden="true">S</div>
+      <div class="brand">
+        <h1>Sky's School Planner</h1>
+        <p>Rawlinson Middle School · 7th Grade · 2026–27</p>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn hide-mobile" id="headerQuickAdd">＋ Quick add</button>
+        <button class="icon-btn" id="themeButton" aria-label="Toggle dark mode">☾</button>
+      </div>
+    </header>
+    <div class="layout">
+      <nav class="nav" aria-label="Planner sections">
+        <button class="active" data-page="today"><span class="nav-icon">⌂</span> Today</button>
+        <button data-page="calendar"><span class="nav-icon">▦</span> Calendar</button>
+        <button data-page="assignments"><span class="nav-icon">✓</span> Assignments</button>
+        <button data-page="schedule"><span class="nav-icon">◷</span> Schedule</button>
+        <button data-page="study"><span class="nav-icon">◎</span> Study</button>
+        <button data-page="grades"><span class="nav-icon">A</span> Grades</button>
+        <button data-page="routines"><span class="nav-icon">☑</span> Routines</button>
+        <button data-page="settings"><span class="nav-icon">⚙</span> Settings</button>
+        <div class="school-chip">
+          <strong>School year</strong>
+          Aug 10, 2026–May 26, 2027<br>
+          8:35 AM–3:55 PM
+        </div>
+      </nav>
+      <main>
+        <section class="page active" id="today"></section>
+        <section class="page" id="calendar"></section>
+        <section class="page" id="assignments"></section>
+        <section class="page" id="schedule"></section>
+        <section class="page" id="study"></section>
+        <section class="page" id="grades"></section>
+        <section class="page" id="routines"></section>
+        <section class="page" id="settings"></section>
+      </main>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-head"><h2 id="modalTitle">Add assignment</h2><button class="close-btn" id="modalClose" aria-label="Close">×</button></div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="celebration" id="celebration">
+    <div class="celebration-box">
+      <div class="emoji">🎉</div><h2>Major project complete!</h2>
+      <p>Excellent work, Sky. Big assignments get finished one step at a time.</p>
+      <button class="btn" id="closeCelebration">Back to the planner</button>
+    </div>
+  </div>
+  <input type="file" id="importInput" accept="application/json" hidden>
+  <script>
+  (() => {
+    'use strict';
+    const STORAGE_KEY = 'sky-school-planner-v1';
+    const SCHOOL_START = '2026-08-10';
+    const SCHOOL_END = '2027-05-26';
+    const classDefaults = [
+      {id:'band',period:1,name:'Beginner Band',bName:'Beginner Band',room:'F101',teacher:'Medariaga Santos',start:'08:35',end:'09:20',color:'#2f6fed',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
+      {id:'art',period:2,name:'Art 2 MS',bName:'Art 2 MS',room:'B123',teacher:'Coker',start:'09:24',end:'10:14',color:'#b65b19',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
+      {id:'science',period:3,name:'Advanced Science 7',bName:'Advanced Science 7',room:'B218',teacher:'Speelman',start:'10:18',end:'11:03',color:'#8c4bc0',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
+      {id:'ela',period:4,name:'Advanced ELA 7',bName:'Advanced ELA 7',room:'C221',teacher:'Leigh-Gomez',start:'11:07',end:'11:52',color:'#cf3b67',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
+      {id:'ela5',period:5,name:'Advanced ELA 7',bName:'Advanced ELA 7',room:'C221',teacher:'Leigh-Gomez',start:'12:30',end:'13:25',color:'#cf3b67',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
+      {id:'history',period:6,name:'Advanced Texas History 7',bName:'Advanced Texas History 7',room:'C213',teacher:'Canter',start:'13:29',end:'14:14',color:'#008a9a',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
+      {id:'math',period:7,name:'Advanced Math 7',bName:'Advanced Math 7',room:'B210',teacher:'Pisano',start:'14:18',end:'15:03',color:'#d58a00',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
+      {id:'pe',period:8,name:'PE 7 / Athletics (Boys)',bName:'PE 7 / Athletics (Boys)',room:'E101',teacher:'Diaz',start:'15:07',end:'15:55',color:'#a62126',weights:{homework:20,quiz:20,test:35,project:25},goal:85}
+    ];
+    const defaultState = {
+      profile:{name:'Sky',grade:'7th Grade',school:'Rawlinson Middle School',district:'Northside Independent School District'},
+      school:{start:SCHOOL_START,end:SCHOOL_END,rotationMode:'standard'},
+      classes:classDefaults,
+      assignments:[],
+      events:[
+        {id:'first-day',title:'First day of 7th grade',type:'school',date:SCHOOL_START,time:'08:30',recurrence:'none',notes:'Rawlinson Middle School'},
+        {id:'last-day',title:'Last day of school',type:'school',date:SCHOOL_END,time:'15:55',recurrence:'none',notes:'Finish strong!'}
+      ],
+      grades:[],
+      classNotes:{}, studyLinks:[], studySessions:[], routineLog:{}, habitLog:{},
+      routines:{
+        morning:['Get dressed','Eat breakfast','Take morning items/medications','Check Today priorities','Leave on time'],
+        afterschool:['Put backpack in its place','Eat a snack and drink water','Check assignments','Complete first homework block','Prepare for activities'],
+        backpack:['Chromebook and charger','Homework and folders','Books and notebooks','PE/athletics clothes','Water bottle'],
+        bedtime:['Pack backpack','Set out clothes','Charge Chromebook','Set alarm','Lights out on time']
+      },
+      habits:['Read 20 minutes','Exercise or practice','Review class notes'],
+      weeklyReviews:{}, notified:{},
+      settings:{dark:false,largeText:false,highContrast:false,dyslexia:false,reduced:false,motivation:true,privateGrades:false,reminderTime:'18:00',defaultReminderDays:2,theme:'navy',profileIcon:'S',weeklyGoal:5,weeklyReward:'Choose a favorite weekend activity'}
+    };
+    let state = loadState();
+    let activePage = 'today';
+    let assignmentFilter = 'incomplete';
+    let calendarView = 'month';
+    let calendarCursor = parseDate(localISO());
+    let timerSeconds = 25 * 60, timerRunning = false, timerInterval = null, timerMode = 'Focus';
+    let toastTimer = null;
+
+    function clone(v){ return JSON.parse(JSON.stringify(v)); }
+    function loadState(){
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!saved) return clone(defaultState);
+        return {
+          ...clone(defaultState), ...saved,
+          profile:{...defaultState.profile,...saved.profile}, school:{...defaultState.school,...saved.school},
+          settings:{...defaultState.settings,...saved.settings}, routines:{...defaultState.routines,...saved.routines},
+          classes:Array.isArray(saved.classes)&&saved.classes.length?saved.classes:clone(classDefaults),
+          assignments:Array.isArray(saved.assignments)?saved.assignments:[], events:Array.isArray(saved.events)?saved.events:clone(defaultState.events),
+          grades:Array.isArray(saved.grades)?saved.grades:[], classNotes:saved.classNotes||{}, studyLinks:saved.studyLinks||[],
+          studySessions:saved.studySessions||[], routineLog:saved.routineLog||{}, habitLog:saved.habitLog||{}, weeklyReviews:saved.weeklyReviews||{}, notified:saved.notified||{}
+        };
+      } catch(e){ return clone(defaultState); }
+    }
+    function saveState(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+    function uid(prefix='id'){ return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7); }
+    function esc(value=''){ return String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+    function parseDate(iso){ const [y,m,d]=String(iso).split('-').map(Number); return new Date(y,m-1,d); }
+    function toISO(d){ const x=new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; }
+    function localISO(){ return toISO(new Date()); }
+    function addDays(iso,n){ const d=parseDate(iso); d.setDate(d.getDate()+n); return toISO(d); }
+    function dayDiff(a,b){ return Math.round((parseDate(b)-parseDate(a))/86400000); }
+    function fmt(iso,opts={month:'short',day:'numeric'}){ if(!iso)return ''; return parseDate(iso).toLocaleDateString(undefined,opts); }
+    function fmtLong(iso){ return fmt(iso,{weekday:'long',month:'long',day:'numeric',year:'numeric'}); }
+    function classById(id){ return state.classes.find(c=>c.id===id)||{name:'General',color:'#667085',room:'',teacher:''}; }
+    function priorityRank(p){ return ({high:0,medium:1,low:2})[p]??1; }
+    function isPast(iso){ return iso && iso < localISO(); }
+    function eventOccurs(e,iso){
+      if(!e.date || iso<e.date) return false;
+      if(e.recurrence==='daily') return true;
+      if(e.recurrence==='weekly') return parseDate(e.date).getDay()===parseDate(iso).getDay();
+      if(e.recurrence==='monthly') return parseDate(e.date).getDate()===parseDate(iso).getDate();
+      return e.date===iso;
+    }
+    function eventsOn(iso){ return state.events.filter(e=>eventOccurs(e,iso)).sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99')); }
+    function isSchoolDay(iso){
+      const d=parseDate(iso), day=d.getDay();
+      return iso>=state.school.start && iso<=state.school.end && day!==0 && day!==6 && !eventsOn(iso).some(e=>e.type==='no-school');
+    }
+    function nextSchoolDay(iso){ let x=iso; for(let i=0;i<370;i++){ x=addDays(x,1); if(isSchoolDay(x)) return x; } return addDays(iso,1); }
+    function dayType(iso){
+      if(state.school.rotationMode!=='ab') return 'Standard day';
+      let count=0, d=state.school.start;
+      while(d<iso && count<300){ if(isSchoolDay(d)) count++; d=addDays(d,1); }
+      return count%2===0?'A Day':'B Day';
+    }
+    function displayClass(c,iso){ return state.school.rotationMode==='ab'&&dayType(iso)==='B Day'?(c.bName||c.name):c.name; }
+    function humanTime(t){ if(!t)return ''; const [h,m]=t.split(':').map(Number); return new Date(2000,0,1,h,m).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); }
+    function assignmentStatus(a){ if(a.completed)return 'completed'; if(a.dueDate<localISO())return 'overdue'; return 'incomplete'; }
+    function sortedAssignments(list=state.assignments){
+      return [...list].sort((a,b)=> Number(a.completed)-Number(b.completed) || (a.dueDate||'9999').localeCompare(b.dueDate||'9999') || priorityRank(a.priority)-priorityRank(b.priority) || Number(a.estimate||0)-Number(b.estimate||0));
+    }
+    function homeworkScore(a){
+      const days=Math.max(-5,dayDiff(localISO(),a.dueDate||localISO()));
+      return (a.dueDate<localISO()?1000:0)+(a.priority==='high'?240:a.priority==='medium'?120:30)+Math.max(0,10-days)*25-(Number(a.estimate)||0)*.12;
+    }
+    function autoRoll(){
+      const today=localISO(); let changed=false;
+      state.assignments.forEach(a=>{
+        if(!a.completed && a.plannedDate && a.plannedDate<today && a.lastRolled!==today){
+          a.plannedDate=today; a.postponed=(a.postponed||0)+1; a.lastRolled=today; changed=true;
+        }
+      });
+      if(changed) saveState();
+    }
+    function applySettings(){
+      const themes={navy:['#163b72','#0d2b58','#2f6fed'],forest:['#176147','#0c4331','#23936e'],purple:['#60358f','#39205f','#8157ba']};
+      const colors=themes[state.settings.theme]||themes.navy;
+      document.documentElement.style.setProperty('--navy',colors[0]);
+      document.documentElement.style.setProperty('--navy-2',colors[1]);
+      document.documentElement.style.setProperty('--blue',colors[2]);
+      document.body.classList.toggle('dark',!!state.settings.dark);
+      document.body.classList.toggle('large-text',!!state.settings.largeText);
+      document.body.classList.toggle('high-contrast',!!state.settings.highContrast);
+      document.body.classList.toggle('dyslexia',!!state.settings.dyslexia);
+      document.body.classList.toggle('reduced',!!state.settings.reduced);
+      document.getElementById('themeButton').textContent=state.settings.dark?'☀':'☾';
+      document.getElementById('brandMark').textContent=state.settings.profileIcon||'S';
+    }
+    function toast(message){
+      const el=document.getElementById('toast'); el.textContent=message; el.classList.add('show');
+      clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2500);
+    }
+    function classOptions(selected=''){
+      return state.classes.map(c=>`<option value="${esc(c.id)}" ${c.id===selected?'selected':''}>Period ${c.period} · ${esc(c.name)}</option>`).join('');
+    }
+    function empty(title,text){ return `<div class="empty"><strong>${esc(title)}</strong>${esc(text)}</div>`; }
+    function statusPill(a){
+      if(a.completed)return '<span class="pill green">Complete</span>';
+      if(a.dueDate<localISO())return '<span class="pill red">Overdue</span>';
+      if(a.dueDate===localISO())return '<span class="pill gold">Due today</span>';
+      return `<span class="pill blue">Due ${esc(fmt(a.dueDate))}</span>`;
+    }
+    function compactAssignment(a,index=null){
+      const c=classById(a.classId);
+      return `<div class="priority-item" style="--class-color:${esc(c.color)}">
+        ${index!==null?`<span class="priority-number">${index+1}</span>`:`<input class="check" type="checkbox" data-complete="${esc(a.id)}" ${a.completed?'checked':''} aria-label="Mark ${esc(a.title)} complete">`}
+        <div class="item-main"><strong>${esc(a.title)}</strong><small>${esc(c.name)} · ${a.estimate||20} min · due ${esc(fmt(a.dueDate))}${(a.postponed||0)>=2?` · postponed ${a.postponed}×`:''}</small></div>
+        ${statusPill(a)}
+      </div>`;
+    }
+    function scheduleRows(iso,limit=false){
+      if(!isSchoolDay(iso)) return empty(iso<state.school.start?'School has not started yet':iso>state.school.end?'School year complete':'No regular classes','The normal class schedule appears on school days.');
+      const now=new Date(), isToday=iso===localISO(), hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      const rows=state.classes.map(c=>`<div class="schedule-row ${isToday&&hm>=c.start&&hm<=c.end?'current':''}" style="--class-color:${esc(c.color)}">
+        <span class="time">${humanTime(c.start)}<br>${humanTime(c.end)}</span><span class="dot"></span>
+        <span><strong>${esc(displayClass(c,iso))}</strong><small>Period ${c.period} · ${esc(c.teacher)} · ${esc(c.room)}</small></span><span class="pill">P${c.period}</span>
+      </div>${c.period===4?'<div class="schedule-row" style="--class-color:#5d6b7f"><span class="time">11:56 AM<br>12:26 PM</span><span class="dot"></span><span><strong>7th Grade Lunch</strong><small>30 minutes</small></span><span class="pill">Lunch</span></div>':''}`).join('');
+      return limit ? state.classes.slice(0,4).map(c=>`<div class="schedule-row" style="--class-color:${esc(c.color)}"><span class="time">${humanTime(c.start)}</span><span class="dot"></span><span><strong>${esc(displayClass(c,iso))}</strong><small>P${c.period} · ${esc(c.room)}</small></span></div>`).join('') : rows;
+    }
+    function getStreak(){
+      const days=new Set(state.assignments.filter(a=>a.completed&&a.completedDate).map(a=>a.completedDate)); let streak=0, d=localISO();
+      while(days.has(d)){ streak++; d=addDays(d,-1); } return streak;
+    }
+    function renderToday(){
+      const today=localISO(), quickDue=today<state.school.start?state.school.start:today, incomplete=state.assignments.filter(a=>!a.completed);
+      const priorities=[...incomplete].sort((a,b)=>homeworkScore(b)-homeworkScore(a)).slice(0,3);
+      const dueToday=incomplete.filter(a=>a.dueDate===today), overdue=incomplete.filter(a=>a.dueDate<today);
+      const upcoming=incomplete.filter(a=>['test','quiz','project','presentation'].includes(a.type)&&a.dueDate>today&&dayDiff(today,a.dueDate)<=14);
+      const activities=eventsOn(today).filter(e=>!['school','no-school'].includes(e.type));
+      const homework=[...incomplete].filter(a=>(a.plannedDate||a.startDate||a.dueDate)<=today||dayDiff(today,a.dueDate)<=7).sort((a,b)=>homeworkScore(b)-homeworkScore(a));
+      const minutes=homework.filter(a=>(a.plannedDate||a.dueDate)<=today).reduce((n,a)=>n+(Number(a.estimate)||20),0);
+      const loadPct=Math.min(100,Math.round(minutes/150*100));
+      const schoolStatus=today<state.school.start?`School begins in ${dayDiff(today,state.school.start)} days`:today>state.school.end?'The 2026–27 school year is complete':isSchoolDay(today)?`${dayType(today)} · First bell 8:30 AM`:'No regular classes today';
+      document.getElementById('today').innerHTML=`
+        <div class="grid dashboard">
+          <div class="stack">
+            <div class="card hero"><div class="hero-grid"><div><p class="eyebrow">${esc(fmtLong(today))}</p><h2>${today<state.school.start?'Ready for 7th grade, Sky?':'Here is your plan, Sky.'}</h2><p>${esc(schoolStatus)}. Your top work and schedule are organized below.</p></div><div class="date-badge"><span class="small">${esc(fmt(today,{month:'long'}))}</span><span class="big">${parseDate(today).getDate()}</span><span class="small">${esc(fmt(today,{weekday:'long'}))}</span></div></div></div>
+            <div class="card card-pad">
+              <div class="card-title"><div><h3>Quick assignment</h3><p>Title, class, due date, and time—done in seconds.</p></div><span class="pill blue">Under 20 sec</span></div>
+              <form class="quick-add" id="quickAddForm">
+                <input class="qa-title" name="title" required maxlength="100" placeholder="What needs to be done?" aria-label="Assignment title">
+                <select name="classId" required aria-label="Class">${classOptions()}</select>
+                <input type="date" name="dueDate" value="${quickDue}" min="${state.school.start}" aria-label="Due date" required>
+                <select name="estimate" aria-label="Estimated minutes"><option value="15">15 min</option><option value="30" selected>30 min</option><option value="45">45 min</option><option value="60">60 min</option><option value="90">90 min</option></select>
+                <button class="btn qa-button">Add</button>
+              </form>
+            </div>
+            <div class="card card-pad">
+              <div class="card-title"><div><h3>Top three priorities</h3><p>Sorted by urgency, priority, and time.</p></div><button class="btn small secondary" data-open-assignment>Add details</button></div>
+              <div class="priority-list">${priorities.length?priorities.map((a,i)=>compactAssignment(a,i)).join(''):empty('Nothing urgent yet','Add an assignment and it will appear here automatically.')}</div>
+            </div>
+            <div class="grid two">
+              <div class="card card-pad"><div class="card-title"><div><h3>Due today</h3><p>${dueToday.length} assignment${dueToday.length===1?'':'s'}</p></div></div><div class="compact-list">${dueToday.length?dueToday.map(a=>compactAssignment(a)).join(''):empty('All clear','No assignments are due today.')}</div></div>
+              <div class="card card-pad"><div class="card-title"><div><h3>Overdue</h3><p>Finish or reschedule these first.</p></div>${overdue.length?`<span class="pill red">${overdue.length}</span>`:''}</div><div class="compact-list">${overdue.length?overdue.map(a=>compactAssignment(a)).join(''):empty('No overdue work','Nice job keeping up.')}</div></div>
+            </div>
+            <div class="card card-pad">
+              <div class="card-title"><div><h3>Suggested homework order</h3><p>Shortest urgent work rises to the top.</p></div><button class="btn small soft" data-page-jump="study">Start focus timer</button></div>
+              <div class="priority-list">${homework.length?homework.slice(0,6).map((a,i)=>compactAssignment(a,i)).join(''):empty('No homework queued','New work will be arranged here automatically.')}</div>
+            </div>
+          </div>
+          <aside class="stack">
+            <div class="card card-pad"><div class="card-title"><div><h3>Today's schedule</h3><p>${esc(dayType(today))}</p></div><button class="btn small secondary" data-page-jump="schedule">Full schedule</button></div><div class="schedule-list">${scheduleRows(today,true)}</div></div>
+            <div class="card card-pad"><div class="card-title"><div><h3>Evening workload</h3><p>${minutes} planned minutes</p></div><span class="pill ${minutes>150?'red':minutes>90?'gold':'green'}">${minutes>150?'Too heavy':minutes>90?'Busy':'Balanced'}</span></div><div class="workload"><div class="meter-track"><div class="meter-fill" style="width:${loadPct}%"></div></div><small>${minutes>150?'Move a lower-priority task or ask for help before the evening gets overloaded.':minutes>90?'Plan a break between study blocks.':'This looks manageable.'}</small></div></div>
+            <div class="card card-pad"><div class="card-title"><div><h3>Tests & major work</h3><p>Next 14 days</p></div></div><div class="compact-list">${upcoming.length?upcoming.map(a=>compactAssignment(a)).join(''):empty('Nothing coming up','Tests and projects will appear here.')}</div></div>
+            <div class="card card-pad"><div class="card-title"><div><h3>After school</h3><p>Activities, chores, and appointments</p></div><button class="btn small secondary" data-open-event>Add</button></div><div class="day-agenda">${activities.length?activities.map(eventCard).join(''):empty('No activities today','Add sports, clubs, tutoring, chores, or family events.')}</div></div>
+            ${state.settings.motivation?`<div class="card card-pad motivation-only"><div class="card-title"><div><h3>Progress</h3><p>Optional motivation</p></div></div><div class="stats"><div class="stat"><strong>${state.assignments.filter(a=>a.completed).length}</strong><span>Completed</span></div><div class="stat"><strong>${getStreak()}</strong><span>Day streak</span></div><div class="stat"><strong>${state.assignments.filter(a=>a.type==='project'&&a.completed).length}</strong><span>Projects</span></div></div><p style="margin:12px 0 0;color:var(--muted);font-size:.8rem">${priorities.length?'One focused block at a time. You have a clear plan.':'A calm plan is a strong start.'}</p></div>`:''}
+          </aside>
+        </div>`;
+    }
+    function eventColor(type){ return ({activity:'#2f6fed',appointment:'#8c4bc0',family:'#cf3b67',chore:'#b76b00',club:'#16865c',tutoring:'#008a9a','no-school':'#c23434',school:'#163b72',study:'#7d51bd'})[type]||'#667085'; }
+    function eventCard(e){ return `<div class="agenda-row" style="--event-color:${eventColor(e.type)}"><strong>${esc(e.title)}</strong><small>${e.time?humanTime(e.time)+' · ':''}${esc(e.type.replace('-',' '))}${e.recurrence!=='none'?` · repeats ${esc(e.recurrence)}`:''}</small>${e.notes?`<div class="assignment-notes">${esc(e.notes)}</div>`:''}</div>`; }
+    function itemsForDate(iso){
+      const events=eventsOn(iso).map(e=>({kind:'event',title:e.title,color:eventColor(e.type),time:e.time||'',data:e}));
+      const assignments=state.assignments.filter(a=>a.dueDate===iso).map(a=>({kind:'assignment',title:a.title,color:classById(a.classId).color,time:'',data:a}));
+      return [...events,...assignments].sort((a,b)=>a.time.localeCompare(b.time));
+    }
+    function renderCalendar(){
+      const label=calendarView==='month'?calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'}):calendarView==='week'?`Week of ${fmt(toISO(startOfWeek(calendarCursor)),{month:'short',day:'numeric'})}`:fmtLong(toISO(calendarCursor));
+      let content='';
+      if(calendarView==='month'){
+        const first=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth(),1), start=startOfWeek(first), cells=[];
+        for(let i=0;i<42;i++){
+          const d=new Date(start); d.setDate(start.getDate()+i); const iso=toISO(d), outside=d.getMonth()!==calendarCursor.getMonth(); const items=itemsForDate(iso);
+          cells.push(`<div class="day-cell ${outside?'outside':''} ${iso===localISO()?'today':''}" data-calendar-date="${iso}"><div class="day-number"><span>${d.getDate()}</span>${iso===state.school.start?'<span class="pill blue">First</span>':iso===state.school.end?'<span class="pill red">Last</span>':''}</div>${items.slice(0,4).map(x=>`<button class="cal-item" style="--event-color:${x.color}" data-calendar-item="${esc(x.data.id)}" data-kind="${x.kind}">${esc(x.title)}</button>`).join('')}${items.length>4?`<small>+${items.length-4} more</small>`:''}</div>`);
+        }
+        content=`<div class="month-grid">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="weekday">${x}</div>`).join('')}${cells.join('')}</div>`;
+      } else if(calendarView==='week'){
+        const start=startOfWeek(calendarCursor), days=[];
+        for(let i=0;i<7;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const iso=toISO(d), items=itemsForDate(iso); days.push(`<div class="week-day ${iso===localISO()?'today':''}"><h4>${fmt(iso,{weekday:'short',month:'short',day:'numeric'})}</h4><div class="day-agenda">${items.length?items.map(x=>`<button class="cal-item" style="--event-color:${x.color}" data-calendar-item="${esc(x.data.id)}" data-kind="${x.kind}">${x.time?humanTime(x.time)+' ':''}${esc(x.title)}</button>`).join(''):empty('Open','No items')}</div></div>`); }
+        content=`<div class="week-grid">${days.join('')}</div>`;
+      } else {
+        const iso=toISO(calendarCursor), items=itemsForDate(iso);
+        content=`<div class="grid two"><div class="card card-pad"><div class="card-title"><div><h3>Classes</h3><p>${esc(dayType(iso))}</p></div></div><div class="schedule-list">${scheduleRows(iso)}</div></div><div class="card card-pad"><div class="card-title"><div><h3>Assignments & events</h3><p>${items.length} item${items.length===1?'':'s'}</p></div></div><div class="day-agenda">${items.length?items.map(x=>x.kind==='event'?eventCard(x.data):compactAssignment(x.data)).join(''):empty('Open day','Nothing is due or scheduled.')}</div></div></div>`;
+      }
+      document.getElementById('calendar').innerHTML=`<div class="page-head"><div><h2>Calendar</h2><p>Daily, weekly, and monthly plans in one place.</p></div><button class="btn" data-open-event>＋ Add event</button></div><div class="card card-pad"><div class="calendar-toolbar"><div><button class="btn small secondary" data-cal-nav="-1">‹</button> <button class="btn small secondary" data-cal-today>Today</button> <button class="btn small secondary" data-cal-nav="1">›</button></div><h3>${esc(label)}</h3><div class="segmented">${['day','week','month'].map(v=>`<button data-cal-view="${v}" class="${calendarView===v?'active':''}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div></div>${content}</div>`;
+    }
+    function startOfWeek(date){ const d=new Date(date); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
+    function assignmentCard(a){
+      const c=classById(a.classId), steps=a.steps||[], doneSteps=steps.filter(s=>s.done).length, progress=steps.length?Math.round(doneSteps/steps.length*100):(a.completed?100:0);
+      return `<article class="assignment-card ${a.completed?'done':''}" style="--class-color:${esc(c.color)}">
+        <input class="check" type="checkbox" data-complete="${esc(a.id)}" ${a.completed?'checked':''} aria-label="Mark ${esc(a.title)} complete">
+        <div><h3 class="assignment-title">${esc(a.title)}</h3><div class="assignment-meta"><span class="pill" style="border-left:4px solid ${esc(c.color)}">${esc(c.name)}</span><span class="pill">${esc((a.type||'homework').replace(/^./,x=>x.toUpperCase()))}</span>${statusPill(a)}<span class="pill">${a.estimate||20} min</span>${a.priority==='high'?'<span class="pill red">High priority</span>':''}${(a.postponed||0)>=2?`<span class="pill red">Postponed ${a.postponed}×</span>`:''}</div>
+        ${a.notes?`<p class="assignment-notes">${esc(a.notes)}</p>`:''}
+        ${steps.length?`<div class="progress-label"><span>Project progress</span><span>${progress}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="step-list">${steps.map((s,i)=>`<label class="step-row ${s.done?'done':''}"><input class="check" type="checkbox" data-step="${esc(a.id)}" data-step-index="${i}" ${s.done?'checked':''}><span>${esc(s.title)}${s.due?` · ${fmt(s.due)}`:''}</span></label>`).join('')}</div>`:''}
+        ${(a.url||a.attachments?.length)?`<div class="attachment-list">${a.url?`<a class="attachment" href="${esc(a.url)}" target="_blank" rel="noopener">Website / study guide ↗</a>`:''}${(a.attachments||[]).map(f=>`<a class="attachment" href="${esc(f.data)}" download="${esc(f.name)}">${esc(f.name)}</a>`).join('')}</div>`:''}
+        </div><div class="assignment-actions"><button class="btn small secondary" data-edit-assignment="${esc(a.id)}">Edit</button><button class="btn small danger" data-delete-assignment="${esc(a.id)}">Delete</button></div></article>`;
+    }
+    function renderAssignments(){
+      let list=state.assignments;
+      if(assignmentFilter==='incomplete')list=list.filter(a=>!a.completed);
+      if(assignmentFilter==='completed')list=list.filter(a=>a.completed);
+      if(assignmentFilter==='overdue')list=list.filter(a=>!a.completed&&a.dueDate<localISO());
+      if(assignmentFilter==='today')list=list.filter(a=>!a.completed&&(a.plannedDate===localISO()||a.dueDate===localISO()));
+      document.getElementById('assignments').innerHTML=`<div class="page-head"><div><h2>Assignments</h2><p>Homework, tests, projects, and presentations.</p></div><button class="btn" data-open-assignment>＋ Add assignment</button></div><div class="filters">${['incomplete','today','overdue','completed','all'].map(x=>`<button class="filter-btn ${assignmentFilter===x?'active':''}" data-assignment-filter="${x}">${x[0].toUpperCase()+x.slice(1)}${x==='all'?` (${state.assignments.length})`:''}</button>`).join('')}</div><div class="assignment-list">${list.length?sortedAssignments(list).map(assignmentCard).join(''):empty('No assignments here','Use Add assignment to enter Sky’s next task.')}</div>`;
+    }
+    function renderSchedule(){
+      const iso=localISO();
+      document.getElementById('schedule').innerHTML=`<div class="page-head"><div><h2>Sky's class schedule</h2><p>Rawlinson Middle School · 7th Grade · Aug 10, 2026–May 26, 2027</p></div><button class="btn secondary" onclick="window.print()">Print</button></div>
+      <div class="grid dashboard"><div class="stack"><div class="card card-pad"><div class="card-title"><div><h3>Regular 7th-grade day</h3><p>Beginning bell 8:30 AM · ${esc(dayType(iso))}</p></div><span class="pill blue">8 periods</span></div><div class="schedule-list">${scheduleRows(state.school.start)}</div><div class="privacy-note" style="margin-top:12px"><strong>Announcements:</strong> 9:24–9:29 AM during 2nd period. <strong>Lunch:</strong> 11:56 AM–12:26 PM between 4th and 5th periods.</div></div></div>
+      <aside class="stack"><div class="card card-pad"><div class="card-title"><div><h3>School year</h3><p>Important dates</p></div></div><div class="day-agenda"><div class="agenda-row" style="--event-color:var(--blue)"><strong>First day</strong><small>Monday, August 10, 2026</small></div><div class="agenda-row" style="--event-color:var(--red)"><strong>Last day</strong><small>Wednesday, May 26, 2027</small></div></div></div><div class="card card-pad"><div class="card-title"><div><h3>Optional A/B schedule</h3><p>Sky's supplied schedule is set to Standard.</p></div></div><p style="color:var(--muted);font-size:.83rem">If Rawlinson begins using alternating days, switch to A/B in Settings and enter the B-day class names. The planner will alternate school days automatically.</p><button class="btn small secondary" data-page-jump="settings">Edit schedule</button></div></aside></div>`;
+    }
+    function renderStudy(){
+      const tests=sortedAssignments(state.assignments.filter(a=>!a.completed&&['test','quiz','project','presentation'].includes(a.type)&&a.dueDate>=localISO()));
+      const links=state.studyLinks||[];
+      document.getElementById('study').innerHTML=`<div class="page-head"><div><h2>Study space</h2><p>Focus timer, test prep, notes, and study links.</p></div><button class="btn secondary" id="studyModeButton">Distraction-free mode</button></div><div class="grid two"><div class="stack"><div class="card timer"><div><div class="timer-time" id="timerDisplay">${formatTimer(timerSeconds)}</div><div class="timer-label">${timerMode} session</div><div class="timer-actions"><button class="btn" id="timerToggle">${timerRunning?'Pause':'Start'}</button><button class="btn secondary" id="timerReset">Reset</button></div><div class="segmented" style="margin-top:14px"><button class="${timerMode==='Focus'?'active':''}" data-timer-min="25" data-timer-mode="Focus">25 focus</button><button class="${timerMode==='Short break'?'active':''}" data-timer-min="5" data-timer-mode="Short break">5 break</button><button class="${timerMode==='Long focus'?'active':''}" data-timer-min="45" data-timer-mode="Long focus">45 focus</button></div></div></div>
+      <div class="card card-pad"><div class="card-title"><div><h3>Study-session blocks</h3><p>Set aside a focused time.</p></div></div><form class="form-grid" id="studySessionForm"><label>Subject<select name="classId">${classOptions()}</select></label><label>Date<input type="date" name="date" value="${localISO()}" required></label><label>Start time<input type="time" name="time" value="17:00" required></label><label>Minutes<select name="minutes"><option>25</option><option>45</option><option>60</option><option>90</option></select></label><button class="btn full">Add study block</button></form><div class="compact-list" style="margin-top:12px">${(state.studySessions||[]).filter(s=>s.date>=localISO()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,5).map(s=>`<div class="agenda-row" style="--event-color:${classById(s.classId).color}"><strong>${esc(classById(s.classId).name)}</strong><small>${fmt(s.date)} · ${humanTime(s.time)} · ${s.minutes} min</small></div>`).join('')||empty('No study blocks','Add a time when you plan to focus.')}</div></div></div>
+      <div class="stack"><div class="card card-pad"><div class="card-title"><div><h3>Upcoming test & project prep</h3><p>Reminders begin before the due date.</p></div></div><div class="assignment-list">${tests.length?tests.slice(0,5).map(a=>{const checklist=a.prepChecklist||['Review notes','Make or review a study guide','Practice without notes','Pack needed materials'].map(t=>({title:t,done:false})); return `<div class="agenda-row" style="--event-color:${classById(a.classId).color}"><strong>${esc(a.title)}</strong><small>${esc(classById(a.classId).name)} · ${fmt(a.dueDate)} · reminder ${a.reminderDays??state.settings.defaultReminderDays} day(s) before</small><div class="step-list">${checklist.map((s,i)=>`<label class="step-row ${s.done?'done':''}"><input class="check" type="checkbox" data-prep="${a.id}" data-prep-index="${i}" ${s.done?'checked':''}><span>${esc(s.title)}</span></label>`).join('')}</div></div>`;}).join(''):empty('Nothing to prepare for','Tests, quizzes, and projects will appear here.')}</div></div>
+      <div class="card card-pad"><div class="card-title"><div><h3>Class notes</h3><p>Saved privately in this browser.</p></div></div><label>Class<select id="notesClass">${classOptions(state.classes[0]?.id)}</select></label><textarea class="notes-area" id="classNotes" placeholder="Write or paste notes here...">${esc(state.classNotes[state.classes[0]?.id]||'')}</textarea><button class="btn" id="saveNotes">Save notes</button></div>
+      <div class="card card-pad"><div class="card-title"><div><h3>Flashcards & study links</h3><p>Link Quizlet, Kahoot, a study guide, or another website.</p></div></div><form class="form-grid" id="studyLinkForm"><label>Label<input name="label" required placeholder="Spanish vocabulary"></label><label>Website<input name="url" type="url" required placeholder="https://..."></label><label class="full">Class<select name="classId">${classOptions()}</select></label><button class="btn full">Save study link</button></form><div class="attachment-list">${links.map(l=>`<a class="attachment" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join('')}</div></div></div></div>`;
+    }
+    function formatTimer(s){ return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+    function categoryAverage(classId,cat){ const g=state.grades.filter(x=>x.classId===classId&&x.category===cat&&Number(x.max)>0); if(!g.length)return null; return g.reduce((n,x)=>n+Number(x.score),0)/g.reduce((n,x)=>n+Number(x.max),0)*100; }
+    function classAverage(c){
+      let total=0, used=0; for(const cat of ['homework','quiz','test','project']){ const avg=categoryAverage(c.id,cat); if(avg!==null){ total+=avg*Number(c.weights?.[cat]||0); used+=Number(c.weights?.[cat]||0); } } return used?total/used:null;
+    }
+    function renderGrades(){
+      const hidden=state.settings.privateGrades;
+      document.getElementById('grades').innerHTML=`<div class="page-head"><div><h2>Grades</h2><p>Weighted averages, goals, missing work, and what-if planning.</p></div><button class="btn secondary" id="toggleGrades">${hidden?'Show private grades':'Hide grades'}</button></div>${hidden?`<div class="card grade-hidden"><h2>Grades are hidden</h2><p>Use “Show private grades” when Sky wants to view them.</p></div>`:`<div class="grid two"><div class="stack"><div class="card card-pad"><div class="card-title"><div><h3>Current class averages</h3><p>Only categories with grades are counted.</p></div></div><div style="overflow:auto"><table class="grade-table"><thead><tr><th>Class</th><th>Average</th><th>Goal</th><th>Status</th></tr></thead><tbody>${state.classes.map(c=>{const avg=classAverage(c); return `<tr><td><strong>${esc(c.name)}</strong><br><small>P${c.period} · ${esc(c.teacher)}</small></td><td class="grade-score">${avg===null?'—':avg.toFixed(1)+'%'}</td><td>${c.goal||90}%</td><td><span class="pill ${avg===null?'':avg>=c.goal?'green':'gold'}">${avg===null?'No grades':avg>=c.goal?'At goal':'Keep working'}</span></td></tr>`}).join('')}</tbody></table></div></div><div class="card card-pad"><div class="card-title"><div><h3>Grade entries</h3><p>Most recent first</p></div></div><div class="day-agenda">${state.grades.length?[...state.grades].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12).map(g=>`<div class="agenda-row" style="--event-color:${classById(g.classId).color}"><strong>${esc(g.name)} · ${Number(g.score)}/${Number(g.max)}</strong><small>${esc(classById(g.classId).name)} · ${esc(g.category)} · ${fmt(g.date)}</small></div>`).join(''):empty('No grades recorded','Add a score to start calculating averages.')}</div></div></div>
+      <div class="stack"><div class="card card-pad"><div class="card-title"><div><h3>Add a grade</h3><p>Record a returned assignment or assessment.</p></div></div><form class="form-grid" id="gradeForm"><label class="full">Class<select name="classId">${classOptions()}</select></label><label>Assignment<input name="name" required placeholder="Unit 1 quiz"></label><label>Category<select name="category"><option value="homework">Homework</option><option value="quiz">Quiz</option><option value="test">Test</option><option value="project">Project</option></select></label><label>Points earned<input type="number" name="score" min="0" step=".1" required></label><label>Points possible<input type="number" name="max" min=".1" step=".1" value="100" required></label><label class="full">Date<input type="date" name="date" value="${localISO()}" required></label><button class="btn full">Save grade</button></form></div>
+      <div class="card card-pad"><div class="card-title"><div><h3>What-if calculator</h3><p>See how one future grade could affect the category.</p></div></div><form class="form-grid" id="whatIfForm"><label class="full">Class<select name="classId">${classOptions()}</select></label><label>Category<select name="category"><option value="homework">Homework</option><option value="quiz">Quiz</option><option value="test">Test</option><option value="project">Project</option></select></label><label>Possible score %<input type="number" name="percent" min="0" max="200" value="90"></label><button class="btn full">Calculate</button></form><div id="whatIfResult" class="privacy-note" style="margin-top:12px">Enter a possible score to see the estimate.</div></div>
+      <div class="card card-pad"><div class="card-title"><div><h3>Missing-assignment alerts</h3><p>Incomplete work past its due date</p></div></div><div class="compact-list">${state.assignments.filter(a=>!a.completed&&a.dueDate<localISO()).map(compactAssignment).join('')||empty('No missing work','There are no overdue assignments.')}</div></div></div></div>
+      <details class="card card-pad" style="margin-top:16px"><summary style="cursor:pointer;font-weight:900">Edit goal grades and category weights</summary><p style="color:var(--muted);font-size:.78rem">Each row should total 100%. Change these values to match each teacher's grading rules.</p><form id="gradeSettingsForm"><div style="overflow:auto"><table class="grade-table"><thead><tr><th>Class</th><th>Goal</th><th>Homework</th><th>Quizzes</th><th>Tests</th><th>Projects</th></tr></thead><tbody>${state.classes.map(c=>`<tr><td><strong>${esc(c.name)}</strong></td><td><input name="goal-${c.id}" type="number" min="0" max="100" value="${c.goal||90}"></td><td><input name="homework-${c.id}" type="number" min="0" max="100" value="${c.weights?.homework??20}"></td><td><input name="quiz-${c.id}" type="number" min="0" max="100" value="${c.weights?.quiz??20}"></td><td><input name="test-${c.id}" type="number" min="0" max="100" value="${c.weights?.test??35}"></td><td><input name="project-${c.id}" type="number" min="0" max="100" value="${c.weights?.project??25}"></td></tr>`).join('')}</tbody></table></div><button class="btn" style="margin-top:12px">Save goals and weights</button></form></details>`}`;
+    }
+    function weekDates(){ const arr=[]; for(let i=6;i>=0;i--)arr.push(addDays(localISO(),-i)); return arr; }
+    function weekKey(){ const d=startOfWeek(new Date()); return toISO(d); }
+    function renderRoutines(){
+      const dates=weekDates();
+      const weekStart=toISO(startOfWeek(new Date())), weekEnd=addDays(weekStart,6);
+      const completedThisWeek=state.assignments.filter(a=>a.completedDate>=weekStart&&a.completedDate<=weekEnd).length;
+      const routineChecks=Object.keys(state.routineLog).filter(k=>k.slice(0,10)>=weekStart&&k.slice(0,10)<=weekEnd&&state.routineLog[k]).length;
+      const dueNextWeek=state.assignments.filter(a=>!a.completed&&a.dueDate>weekEnd&&a.dueDate<=addDays(weekEnd,7)).length;
+      const routineSection=(key,title)=>`<div class="routine-section"><h3>${title}</h3><div class="routine-list">${state.routines[key].map((x,i)=>{const k=`${localISO()}|${key}|${i}`,done=!!state.routineLog[k]; return `<label class="routine-item ${done?'done':''}"><input class="check" type="checkbox" data-routine="${key}" data-routine-index="${i}" ${done?'checked':''}><span>${esc(x)}</span></label>`}).join('')}</div></div>`;
+      document.getElementById('routines').innerHTML=`<div class="page-head"><div><h2>Routines & responsibilities</h2><p>Simple daily checklists reset each day.</p></div><button class="btn secondary" data-open-event>Add chore or event</button></div><div class="card card-pad motivation-only" style="margin-bottom:16px"><div class="card-title"><div><h3>This week's summary</h3><p>${fmt(weekStart)}–${fmt(weekEnd)}</p></div><span class="pill ${completedThisWeek>=Number(state.settings.weeklyGoal||5)?'green':'blue'}">${completedThisWeek}/${Number(state.settings.weeklyGoal||5)} goal</span></div><div class="stats"><div class="stat"><strong>${completedThisWeek}</strong><span>Work completed</span></div><div class="stat"><strong>${routineChecks}</strong><span>Routine checks</span></div><div class="stat"><strong>${dueNextWeek}</strong><span>Due next week</span></div></div>${state.settings.motivation?`<p style="margin:12px 0 0;color:var(--muted);font-size:.8rem">${completedThisWeek>=Number(state.settings.weeklyGoal||5)?`Goal reached—reward: ${esc(state.settings.weeklyReward||'Choose a favorite activity')}.`:`${Math.max(0,Number(state.settings.weeklyGoal||5)-completedThisWeek)} more completed assignment(s) to reach this week's goal.`}</p>`:''}</div><div class="grid two"><div class="card card-pad">${routineSection('morning','Morning checklist')}${routineSection('afterschool','After-school routine')}</div><div class="card card-pad">${routineSection('backpack','Pack the backpack')}${routineSection('bedtime','Bedtime checklist')}</div></div><div class="card card-pad" style="margin-top:16px"><div class="card-title"><div><h3>Habit tracker</h3><p>Optional—tap a day to mark it complete.</p></div></div><div class="habit-table"><div></div>${dates.map(d=>`<div class="habit-day">${fmt(d,{weekday:'narrow'})}<br>${parseDate(d).getDate()}</div>`).join('')}${state.habits.map((h,hi)=>`<strong style="font-size:.78rem">${esc(h)}</strong>${dates.map(d=>{const k=`${d}|${hi}`,done=!!state.habitLog[k]; return `<button class="habit-check ${done?'done':''}" data-habit="${hi}" data-habit-date="${d}" aria-label="${esc(h)} on ${fmt(d)}">✓</button>`}).join('')}`).join('')}</div></div><div class="card card-pad" style="margin-top:16px"><div class="card-title"><div><h3>Weekly planning & review</h3><p>Use this once a week to look ahead.</p></div></div><textarea id="weeklyReview" placeholder="Wins this week…&#10;What needs attention…&#10;Tests and projects next week…&#10;One goal for the week…">${esc(state.weeklyReviews[weekKey()]||'')}</textarea><button class="btn" id="saveReview">Save weekly review</button></div>`;
+    }
+    function renderSettings(){
+      const s=state.settings;
+      const toggle=(key,title,desc)=>`<div class="toggle-row"><div><strong>${title}</strong><small>${desc}</small></div><label class="switch"><input type="checkbox" data-setting="${key}" ${s[key]?'checked':''}><span></span></label></div>`;
+      document.getElementById('settings').innerHTML=`<div class="page-head"><div><h2>Settings</h2><p>Keep the planner comfortable, private, and easy to use.</p></div></div><div class="grid two"><div class="stack"><div class="settings-section"><h3>Appearance & accessibility</h3><div class="form-grid" style="margin-bottom:10px"><label>Color theme<select id="colorTheme"><option value="navy" ${s.theme==='navy'?'selected':''}>Patriot navy</option><option value="forest" ${s.theme==='forest'?'selected':''}>Forest green</option><option value="purple" ${s.theme==='purple'?'selected':''}>Calm purple</option></select></label><label>Profile icon<select id="profileIcon"><option value="S" ${s.profileIcon==='S'?'selected':''}>S</option><option value="★" ${s.profileIcon==='★'?'selected':''}>Star</option><option value="📚" ${s.profileIcon==='📚'?'selected':''}>Books</option><option value="✓" ${s.profileIcon==='✓'?'selected':''}>Check</option></select></label></div>${toggle('dark','Dark mode','A darker screen for evening use.')}${toggle('largeText','Large text','Increase text and control sizes.')}${toggle('highContrast','High contrast','Use stronger borders and contrast.')}${toggle('dyslexia','Easy-read font','Use wider letter and word spacing.')}${toggle('reduced','Reduced-distraction layout','Hide optional visual extras.')}</div><div class="settings-section"><h3>Optional motivation</h3>${toggle('motivation','Streaks, badges & celebrations','Turn off for a strictly practical planner.')}<div class="form-grid" style="margin-top:10px"><label>Weekly completed-work goal<input id="weeklyGoal" type="number" min="1" max="30" value="${Number(s.weeklyGoal||5)}"></label><label>Reward after goal<input id="weeklyReward" value="${esc(s.weeklyReward||'')}" placeholder="Favorite weekend activity"></label></div></div><div class="settings-section"><h3>Privacy & backup</h3><p class="privacy-note">Planner information stays in this browser on this device. It is not sent to a server.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><button class="btn secondary" id="exportData">Download backup</button><button class="btn secondary" id="importData">Restore backup</button></div></div></div>
+      <div class="stack"><div class="settings-section"><h3>Reminders</h3><label>Reminder time<input type="time" id="reminderTime" value="${esc(s.reminderTime)}"></label><label style="margin-top:10px">Default days before due<select id="defaultReminderDays"><option value="0" ${s.defaultReminderDays==0?'selected':''}>Same day</option><option value="1" ${s.defaultReminderDays==1?'selected':''}>1 day</option><option value="2" ${s.defaultReminderDays==2?'selected':''}>2 days</option><option value="3" ${s.defaultReminderDays==3?'selected':''}>3 days</option><option value="5" ${s.defaultReminderDays==5?'selected':''}>5 days</option><option value="7" ${s.defaultReminderDays==7?'selected':''}>7 days</option></select></label><button class="btn wide" id="enableNotifications" style="margin-top:12px">Enable browser notifications</button><p style="font-size:.72rem;color:var(--muted)">Notifications are checked while the planner is open. Browser permission is required.</p></div><div class="settings-section"><h3>Class schedule options</h3><label>Schedule type<select id="rotationMode"><option value="standard" ${state.school.rotationMode==='standard'?'selected':''}>Standard day</option><option value="ab" ${state.school.rotationMode==='ab'?'selected':''}>Alternating A/B days</option></select></label><p style="font-size:.74rem;color:var(--muted)">The supplied schedule is a standard day. B-day names can be different if Rawlinson later provides an A/B schedule.</p></div></div></div>
+      <div class="settings-section" style="margin-top:16px"><div class="card-title"><div><h3>Edit Sky's classes</h3><p>A-day/default name, optional B-day name, room, teacher, and color.</p></div></div><form id="scheduleEditor" class="schedule-editor">${state.classes.map(c=>`<div class="editor-row"><div class="period-num">P${c.period}</div><label>A / default<input name="name-${c.id}" value="${esc(c.name)}" required></label><label>B-day<input name="bName-${c.id}" value="${esc(c.bName||c.name)}"></label><label>Room<input name="room-${c.id}" value="${esc(c.room)}"></label><label>Teacher<input name="teacher-${c.id}" value="${esc(c.teacher)}"></label><label>Color<input class="color-input" type="color" name="color-${c.id}" value="${esc(c.color)}"></label></div>`).join('')}<button class="btn">Save schedule changes</button></form></div>`;
+    }
+    function renderAll(){ renderToday(); renderCalendar(); renderAssignments(); renderSchedule(); renderStudy(); renderGrades(); renderRoutines(); renderSettings(); bindDynamic(); }
+    function showPage(page){
+      activePage=page; document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page)); document.querySelectorAll('.nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+      if(page==='calendar')renderCalendar(); if(page==='assignments')renderAssignments(); if(page==='study')renderStudy(); if(page==='grades')renderGrades(); if(page==='routines')renderRoutines(); if(page==='settings')renderSettings(); bindDynamic(); window.scrollTo({top:0,behavior:'smooth'});
+    }
+    function bindDynamic(){
+      document.querySelectorAll('[data-open-assignment]').forEach(b=>b.onclick=()=>openAssignmentModal());
+      document.querySelectorAll('[data-open-event]').forEach(b=>b.onclick=()=>openEventModal());
+      document.querySelectorAll('[data-page-jump]').forEach(b=>b.onclick=()=>showPage(b.dataset.pageJump));
+      document.querySelectorAll('[data-complete]').forEach(x=>x.onchange=()=>toggleComplete(x.dataset.complete,x.checked));
+      document.querySelectorAll('[data-step]').forEach(x=>x.onchange=()=>toggleStep(x.dataset.step,Number(x.dataset.stepIndex),x.checked));
+      document.querySelectorAll('[data-prep]').forEach(x=>x.onchange=()=>togglePrep(x.dataset.prep,Number(x.dataset.prepIndex),x.checked));
+      document.querySelectorAll('[data-edit-assignment]').forEach(b=>b.onclick=()=>openAssignmentModal(b.dataset.editAssignment));
+      document.querySelectorAll('[data-delete-assignment]').forEach(b=>b.onclick=()=>deleteAssignment(b.dataset.deleteAssignment));
+      document.querySelectorAll('[data-assignment-filter]').forEach(b=>b.onclick=()=>{assignmentFilter=b.dataset.assignmentFilter;renderAssignments();bindDynamic();});
+      document.querySelectorAll('[data-cal-view]').forEach(b=>b.onclick=()=>{calendarView=b.dataset.calView;renderCalendar();bindDynamic();});
+      document.querySelectorAll('[data-cal-nav]').forEach(b=>b.onclick=()=>moveCalendar(Number(b.dataset.calNav)));
+      document.querySelectorAll('[data-cal-today]').forEach(b=>b.onclick=()=>{calendarCursor=parseDate(localISO());renderCalendar();bindDynamic();});
+      document.querySelectorAll('[data-calendar-date]').forEach(b=>b.ondblclick=()=>openEventModal(null,b.dataset.calendarDate));
+      document.querySelectorAll('[data-calendar-item]').forEach(b=>b.onclick=e=>{e.stopPropagation(); if(b.dataset.kind==='assignment')openAssignmentModal(b.dataset.calendarItem); else openEventModal(b.dataset.calendarItem);});
+      const q=document.getElementById('quickAddForm'); if(q)q.onsubmit=quickAdd;
+      const ss=document.getElementById('studySessionForm'); if(ss)ss.onsubmit=addStudySession;
+      const sl=document.getElementById('studyLinkForm'); if(sl)sl.onsubmit=addStudyLink;
+      const gf=document.getElementById('gradeForm'); if(gf)gf.onsubmit=addGrade;
+      const gsf=document.getElementById('gradeSettingsForm'); if(gsf)gsf.onsubmit=saveGradeSettings;
+      const wf=document.getElementById('whatIfForm'); if(wf)wf.onsubmit=calculateWhatIf;
+      const tg=document.getElementById('toggleGrades'); if(tg)tg.onclick=()=>{state.settings.privateGrades=!state.settings.privateGrades;saveState();renderGrades();bindDynamic();};
+      const tr=document.getElementById('timerToggle'); if(tr)tr.onclick=toggleTimer;
+      const rr=document.getElementById('timerReset'); if(rr)rr.onclick=()=>setTimer(timerMode==='Short break'?5:timerMode==='Long focus'?45:25,timerMode);
+      document.querySelectorAll('[data-timer-min]').forEach(b=>b.onclick=()=>setTimer(Number(b.dataset.timerMin),b.dataset.timerMode));
+      const sm=document.getElementById('studyModeButton'); if(sm)sm.onclick=()=>{document.body.classList.toggle('study-mode');sm.textContent=document.body.classList.contains('study-mode')?'Exit study mode':'Distraction-free mode';};
+      const nc=document.getElementById('notesClass'); if(nc)nc.onchange=()=>{document.getElementById('classNotes').value=state.classNotes[nc.value]||'';};
+      const sn=document.getElementById('saveNotes'); if(sn)sn.onclick=()=>{state.classNotes[nc.value]=document.getElementById('classNotes').value;saveState();toast('Class notes saved.');};
+      document.querySelectorAll('[data-routine]').forEach(x=>x.onchange=()=>{state.routineLog[`${localISO()}|${x.dataset.routine}|${x.dataset.routineIndex}`]=x.checked;saveState();renderRoutines();bindDynamic();});
+      document.querySelectorAll('[data-habit]').forEach(x=>x.onclick=()=>{const k=`${x.dataset.habitDate}|${x.dataset.habit}`;state.habitLog[k]=!state.habitLog[k];saveState();renderRoutines();bindDynamic();});
+      const sr=document.getElementById('saveReview'); if(sr)sr.onclick=()=>{state.weeklyReviews[weekKey()]=document.getElementById('weeklyReview').value;saveState();toast('Weekly review saved.');};
+      document.querySelectorAll('[data-setting]').forEach(x=>x.onchange=()=>{state.settings[x.dataset.setting]=x.checked;saveState();applySettings();renderAll();showPage('settings');});
+      const rt=document.getElementById('reminderTime'); if(rt)rt.onchange=()=>{state.settings.reminderTime=rt.value;saveState();};
+      const rd=document.getElementById('defaultReminderDays'); if(rd)rd.onchange=()=>{state.settings.defaultReminderDays=Number(rd.value);saveState();};
+      const rm=document.getElementById('rotationMode'); if(rm)rm.onchange=()=>{state.school.rotationMode=rm.value;saveState();renderAll();showPage('settings');};
+      const ct=document.getElementById('colorTheme'); if(ct)ct.onchange=()=>{state.settings.theme=ct.value;saveState();applySettings();};
+      const pi=document.getElementById('profileIcon'); if(pi)pi.onchange=()=>{state.settings.profileIcon=pi.value;saveState();applySettings();};
+      const wg=document.getElementById('weeklyGoal'); if(wg)wg.onchange=()=>{state.settings.weeklyGoal=Math.max(1,Number(wg.value)||5);saveState();};
+      const wr=document.getElementById('weeklyReward'); if(wr)wr.onchange=()=>{state.settings.weeklyReward=wr.value;saveState();};
+      const se=document.getElementById('scheduleEditor'); if(se)se.onsubmit=saveSchedule;
+      const en=document.getElementById('enableNotifications'); if(en)en.onclick=requestNotifications;
+      const ex=document.getElementById('exportData'); if(ex)ex.onclick=exportData;
+      const im=document.getElementById('importData'); if(im)im.onclick=()=>document.getElementById('importInput').click();
+    }
+    function moveCalendar(dir){
+      if(calendarView==='month')calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+dir,1);
+      else calendarCursor=parseDate(addDays(toISO(calendarCursor),dir*(calendarView==='week'?7:1)));
+      renderCalendar();bindDynamic();
+    }
+    function quickAdd(e){
+      e.preventDefault(); const f=new FormData(e.currentTarget); const due=f.get('dueDate');
+      state.assignments.push({id:uid('a'),title:f.get('title').trim(),classId:f.get('classId'),type:'homework',dueDate:due,startDate:localISO(),plannedDate:localISO(),priority:'medium',estimate:Number(f.get('estimate')),notes:'',url:'',steps:[],attachments:[],reminderDays:state.settings.defaultReminderDays,completed:false,postponed:0});
+      saveState();renderAll();toast('Assignment added.');
+    }
+    function openModal(title,html){ document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modalBackdrop').classList.add('open');document.body.style.overflow='hidden'; }
+    function closeModal(){ document.getElementById('modalBackdrop').classList.remove('open');document.body.style.overflow=''; }
+    function openAssignmentModal(id=null){
+      const a=id?state.assignments.find(x=>x.id===id):null, today=localISO();
+      const steps=(a?.steps||[]).map(s=>`${s.title}${s.due?' | '+s.due:''}`).join('\n');
+      openModal(a?'Edit assignment':'Add assignment',`<form id="assignmentForm" class="form-grid"><input type="hidden" name="id" value="${esc(a?.id||'')}"><label class="full">Assignment title<input name="title" required maxlength="120" value="${esc(a?.title||'')}" placeholder="Example: Chapter 2 questions"></label><label>Class<select name="classId">${classOptions(a?.classId)}</select></label><label>Type<select name="type">${['homework','quiz','test','project','presentation'].map(x=>`<option value="${x}" ${a?.type===x?'selected':''}>${x[0].toUpperCase()+x.slice(1)}</option>`).join('')}</select></label><label>Start today date<input type="date" name="startDate" value="${esc(a?.startDate||today)}"></label><label>Final due date<input type="date" name="dueDate" value="${esc(a?.dueDate||today)}" required></label><label>Priority<select name="priority"><option value="high" ${a?.priority==='high'?'selected':''}>High</option><option value="medium" ${!a||a?.priority==='medium'?'selected':''}>Medium</option><option value="low" ${a?.priority==='low'?'selected':''}>Low</option></select></label><label>Estimated minutes<input type="number" name="estimate" min="5" max="600" step="5" value="${a?.estimate||30}"></label><label>Reminder<select name="reminderDays">${[0,1,2,3,5,7].map(n=>`<option value="${n}" ${(a?.reminderDays??state.settings.defaultReminderDays)==n?'selected':''}>${n===0?'Same day':n+' day'+(n===1?'':'s')+' before'}</option>`).join('')}</select></label><label>Plan to work on<input type="date" name="plannedDate" value="${esc(a?.plannedDate||a?.startDate||today)}"></label><label class="full">Instructions / notes<textarea name="notes" placeholder="Important directions, materials, or questions...">${esc(a?.notes||'')}</textarea></label><label class="full">Website or study-guide link<input name="url" type="url" value="${esc(a?.url||'')}" placeholder="https://..."></label><label class="full">Project steps—one per line; optional deadline after |<textarea name="steps" placeholder="Choose topic | 2026-09-10&#10;Create outline | 2026-09-12&#10;Finish final draft | 2026-09-18">${esc(steps)}</textarea></label><label class="full">Attach small photos or documents (under 600 KB each)<input type="file" name="files" multiple></label><div class="privacy-note full">Attachments stay only in this browser. Large files should be saved in Google Drive and added as a website link.</div><button class="btn full">${a?'Save changes':'Add assignment'}</button></form>`);
+      document.getElementById('assignmentForm').onsubmit=saveAssignment;
+    }
+    async function saveAssignment(e){
+      e.preventDefault(); const f=new FormData(e.currentTarget), id=f.get('id'), existing=id?state.assignments.find(x=>x.id===id):null;
+      const oldSteps=existing?.steps||[];
+      const steps=String(f.get('steps')||'').split('\n').map(x=>x.trim()).filter(Boolean).map((line,i)=>{const [title,due]=line.split('|').map(x=>x.trim()); return {title,due:/^\d{4}-\d{2}-\d{2}$/.test(due||'')?due:'',done:oldSteps[i]?.title===title?oldSteps[i].done:false};});
+      const attachments=[...(existing?.attachments||[])], files=e.currentTarget.elements.files.files;
+      for(const file of files){ if(file.size>600000){toast(`${file.name} is too large; use a link instead.`);continue;} attachments.push({name:file.name,data:await fileData(file)}); }
+      const obj={id:id||uid('a'),title:String(f.get('title')).trim(),classId:f.get('classId'),type:f.get('type'),startDate:f.get('startDate'),dueDate:f.get('dueDate'),plannedDate:f.get('plannedDate')||f.get('startDate'),priority:f.get('priority'),estimate:Number(f.get('estimate'))||30,reminderDays:Number(f.get('reminderDays')),notes:f.get('notes'),url:f.get('url'),steps,attachments,completed:existing?.completed||false,completedDate:existing?.completedDate||'',postponed:existing?.postponed||0,lastRolled:existing?.lastRolled||'',prepChecklist:existing?.prepChecklist};
+      if(existing)Object.assign(existing,obj); else state.assignments.push(obj); saveState();closeModal();renderAll();showPage(activePage);toast(existing?'Assignment updated.':'Assignment added.');
+    }
+    function fileData(file){ return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);}); }
+    function toggleComplete(id,checked){ const a=state.assignments.find(x=>x.id===id);if(!a)return;a.completed=checked;a.completedDate=checked?localISO():'';saveState();if(checked&&a.type==='project'&&state.settings.motivation)document.getElementById('celebration').classList.add('show');renderAll();showPage(activePage); }
+    function toggleStep(id,index,checked){ const a=state.assignments.find(x=>x.id===id);if(!a?.steps?.[index])return;a.steps[index].done=checked;if(a.steps.length&&a.steps.every(s=>s.done)){a.completed=true;a.completedDate=localISO();if(a.type==='project'&&state.settings.motivation)document.getElementById('celebration').classList.add('show');}saveState();renderAll();showPage(activePage); }
+    function togglePrep(id,index,checked){ const a=state.assignments.find(x=>x.id===id);if(!a)return;if(!a.prepChecklist)a.prepChecklist=['Review notes','Make or review a study guide','Practice without notes','Pack needed materials'].map(title=>({title,done:false}));a.prepChecklist[index].done=checked;saveState();renderStudy();bindDynamic(); }
+    function deleteAssignment(id){ const a=state.assignments.find(x=>x.id===id);if(!a||!confirm(`Delete “${a.title}”?`))return;state.assignments=state.assignments.filter(x=>x.id!==id);saveState();renderAll();showPage(activePage);toast('Assignment deleted.'); }
+    function openEventModal(id=null,date=localISO()){
+      const e=id?state.events.find(x=>x.id===id):null;
+      openModal(e?'Edit event':'Add event',`<form id="eventForm" class="form-grid"><input type="hidden" name="id" value="${esc(e?.id||'')}"><label class="full">Event title<input name="title" required value="${esc(e?.title||'')}" placeholder="Practice, appointment, chore..."></label><label>Category<select name="type">${['activity','club','tutoring','chore','appointment','family','study','no-school','school'].map(x=>`<option value="${x}" ${e?.type===x?'selected':''}>${x.replace('-',' ').replace(/^./,y=>y.toUpperCase())}</option>`).join('')}</select></label><label>Date<input type="date" name="date" value="${esc(e?.date||date)}" required></label><label>Time<input type="time" name="time" value="${esc(e?.time||'16:00')}"></label><label>Repeat<select name="recurrence"><option value="none" ${!e||e.recurrence==='none'?'selected':''}>Does not repeat</option><option value="daily" ${e?.recurrence==='daily'?'selected':''}>Daily</option><option value="weekly" ${e?.recurrence==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${e?.recurrence==='monthly'?'selected':''}>Monthly</option></select></label><label class="full">Notes<textarea name="notes">${esc(e?.notes||'')}</textarea></label><button class="btn full">${e?'Save event':'Add event'}</button>${e&&!['first-day','last-day'].includes(e.id)?`<button type="button" class="btn danger full" id="deleteEvent">Delete event</button>`:''}</form>`);
+      document.getElementById('eventForm').onsubmit=saveEvent; const del=document.getElementById('deleteEvent');if(del)del.onclick=()=>{if(confirm(`Delete “${e.title}”?`)){state.events=state.events.filter(x=>x.id!==e.id);saveState();closeModal();renderAll();showPage(activePage);}};
+    }
+    function saveEvent(ev){ ev.preventDefault();const f=new FormData(ev.currentTarget),id=f.get('id'),old=id?state.events.find(x=>x.id===id):null,obj={id:id||uid('e'),title:f.get('title'),type:f.get('type'),date:f.get('date'),time:f.get('time'),recurrence:f.get('recurrence'),notes:f.get('notes')};if(old)Object.assign(old,obj);else state.events.push(obj);saveState();closeModal();renderAll();showPage(activePage);toast(old?'Event updated.':'Event added.'); }
+    function setTimer(min,mode){ clearInterval(timerInterval);timerRunning=false;timerSeconds=min*60;timerMode=mode;renderStudy();bindDynamic(); }
+    function toggleTimer(){
+      timerRunning=!timerRunning;if(timerRunning){timerInterval=setInterval(()=>{timerSeconds--;const d=document.getElementById('timerDisplay');if(d)d.textContent=formatTimer(timerSeconds);if(timerSeconds<=0){clearInterval(timerInterval);timerRunning=false;toast(`${timerMode} session complete.`);if('Notification'in window&&Notification.permission==='granted')new Notification("Sky's Planner",{body:`${timerMode} session complete.`});renderStudy();bindDynamic();}},1000);}else clearInterval(timerInterval);renderStudy();bindDynamic();
+    }
+    function addStudySession(e){e.preventDefault();const f=new FormData(e.currentTarget);state.studySessions.push({id:uid('s'),classId:f.get('classId'),date:f.get('date'),time:f.get('time'),minutes:Number(f.get('minutes'))});saveState();renderStudy();bindDynamic();toast('Study block added.');}
+    function addStudyLink(e){e.preventDefault();const f=new FormData(e.currentTarget);state.studyLinks.push({id:uid('l'),label:f.get('label'),url:f.get('url'),classId:f.get('classId')});saveState();renderStudy();bindDynamic();toast('Study link saved.');}
+    function addGrade(e){e.preventDefault();const f=new FormData(e.currentTarget);state.grades.push({id:uid('g'),classId:f.get('classId'),name:f.get('name'),category:f.get('category'),score:Number(f.get('score')),max:Number(f.get('max')),date:f.get('date')});saveState();renderGrades();bindDynamic();toast('Grade saved.');}
+    function saveGradeSettings(e){e.preventDefault();const f=new FormData(e.currentTarget);for(const c of state.classes){const weights={homework:Number(f.get(`homework-${c.id}`)),quiz:Number(f.get(`quiz-${c.id}`)),test:Number(f.get(`test-${c.id}`)),project:Number(f.get(`project-${c.id}`))};const total=Object.values(weights).reduce((n,x)=>n+x,0);if(total!==100){toast(`${c.name} weights total ${total}%. Please make them total 100%.`);return;}c.goal=Number(f.get(`goal-${c.id}`));c.weights=weights;}saveState();renderGrades();bindDynamic();toast('Grade goals and weights saved.');}
+    function calculateWhatIf(e){e.preventDefault();const f=new FormData(e.currentTarget),classId=f.get('classId'),cat=f.get('category'),pct=Number(f.get('percent')),grades=state.grades.filter(g=>g.classId===classId&&g.category===cat);const oldPoints=grades.reduce((n,g)=>n+Number(g.score),0),oldMax=grades.reduce((n,g)=>n+Number(g.max),0),newAvg=(oldPoints+pct)/(oldMax+100)*100;document.getElementById('whatIfResult').innerHTML=`A ${pct.toFixed(1)}% score would make the <strong>${esc(cat)}</strong> category about <strong>${newAvg.toFixed(1)}%</strong>. This estimate treats the new item as 100 points.`;}
+    function saveSchedule(e){e.preventDefault();const f=new FormData(e.currentTarget);state.classes.forEach(c=>{c.name=f.get(`name-${c.id}`);c.bName=f.get(`bName-${c.id}`)||c.name;c.room=f.get(`room-${c.id}`);c.teacher=f.get(`teacher-${c.id}`);c.color=f.get(`color-${c.id}`);});saveState();renderAll();showPage('settings');toast('Class schedule saved.');}
+    async function requestNotifications(){ if(!('Notification'in window)){toast('This browser does not support notifications.');return;}const p=await Notification.requestPermission();toast(p==='granted'?'Notifications enabled.':'Notifications were not enabled.');if(p==='granted')checkNotifications(); }
+    function checkNotifications(){
+      if(!('Notification'in window)||Notification.permission!=='granted')return;const today=localISO(),now=new Date(),[h,m]=state.settings.reminderTime.split(':').map(Number);if(now.getHours()*60+now.getMinutes()<h*60+m)return;
+      state.assignments.filter(a=>!a.completed).forEach(a=>{const days=dayDiff(today,a.dueDate),limit=a.reminderDays??state.settings.defaultReminderDays,key=`${today}|${a.id}`;if(days<=limit&&!state.notified[key]){new Notification(a.dueDate<today?'Overdue assignment':`${a.type||'Assignment'} reminder`,{body:`${a.title} · ${classById(a.classId).name} · ${a.dueDate<today?'overdue':'due '+fmt(a.dueDate)}`});state.notified[key]=true;saveState();}});
+    }
+    function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`sky-planner-backup-${localISO()}.json`;a.click();URL.revokeObjectURL(url);toast('Backup downloaded.');}
+    function importData(file){const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result);if(!Array.isArray(data.classes)||!Array.isArray(data.assignments))throw new Error();state=data;saveState();applySettings();renderAll();showPage('today');toast('Planner backup restored.');}catch(e){toast('That file is not a valid Sky planner backup.');}};r.readAsText(file);}
+    document.querySelectorAll('.nav button[data-page]').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+    document.getElementById('headerQuickAdd').onclick=()=>openAssignmentModal();
+    document.getElementById('themeButton').onclick=()=>{state.settings.dark=!state.settings.dark;saveState();applySettings();};
+    document.getElementById('modalClose').onclick=closeModal;
+    document.getElementById('modalBackdrop').onclick=e=>{if(e.target.id==='modalBackdrop')closeModal();};
+    document.getElementById('closeCelebration').onclick=()=>document.getElementById('celebration').classList.remove('show');
+    document.getElementById('importInput').onchange=e=>{if(e.target.files[0])importData(e.target.files[0]);};
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();document.body.classList.remove('study-mode');}});
+    autoRoll();applySettings();renderAll();checkNotifications();setInterval(checkNotifications,60000);
+  })();
+  </script>
+</body>
+</html>
