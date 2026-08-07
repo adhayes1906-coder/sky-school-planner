@@ -107,13 +107,13 @@
     .calendar-toolbar h3 { min-width:190px; margin:0; text-align:center; }
     .month-grid { display:grid; grid-template-columns:repeat(7,minmax(90px,1fr)); overflow:auto; border-top:1px solid var(--line); border-left:1px solid var(--line); border-radius:14px; background:#fff; }
     .weekday { min-width:90px; padding:9px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); text-align:center; color:var(--muted); font-size:.72rem; font-weight:900; text-transform:uppercase; background:#f6f8fb; }
-    .day-cell { min-width:90px; min-height:112px; padding:7px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff; }
+    .day-cell { min-width:90px; min-height:112px; padding:7px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff; cursor:pointer; }
     .day-cell.outside { background:#f8fafc; color:#9aa5b4; }
     .day-cell.today { box-shadow:inset 0 0 0 3px #84aef0; }
     .day-number { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:.75rem; font-weight:900; }
     .cal-item { display:block; width:100%; margin:3px 0; padding:4px 6px; overflow:hidden; border:0; border-left:4px solid var(--event-color,var(--blue)); border-radius:6px; text-align:left; text-overflow:ellipsis; white-space:nowrap; color:#26354a; background:#edf3fb; font-size:.64rem; }
     .week-grid { display:grid; grid-template-columns:repeat(7,minmax(125px,1fr)); gap:8px; overflow:auto; }
-    .week-day { min-width:125px; min-height:320px; padding:11px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+    .week-day { min-width:125px; min-height:320px; padding:11px; border:1px solid var(--line); border-radius:14px; background:#fff; cursor:pointer; }
     .week-day.today { box-shadow:inset 0 0 0 2px #6b9be7; }
     .week-day h4 { margin:0 0 10px; }
     .day-agenda { display:grid; gap:10px; }
@@ -525,16 +525,18 @@
         const first=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth(),1), start=startOfWeek(first), cells=[];
         for(let i=0;i<42;i++){
           const d=new Date(start); d.setDate(start.getDate()+i); const iso=toISO(d), outside=d.getMonth()!==calendarCursor.getMonth(); const items=itemsForDate(iso);
-          cells.push(`<div class="day-cell ${outside?'outside':''} ${iso===localISO()?'today':''}" data-calendar-date="${iso}"><div class="day-number"><span>${d.getDate()}</span>${iso===state.school.start?'<span class="pill blue">First</span>':iso===state.school.end?'<span class="pill red">Last</span>':''}</div>${items.slice(0,4).map(x=>`<button class="cal-item" style="--event-color:${x.color}" data-calendar-item="${esc(x.data.id)}" data-kind="${x.kind}">${esc(x.title)}</button>`).join('')}${items.length>4?`<small>+${items.length-4} more</small>`:''}</div>`);
+          const schoolSummary=isSchoolDay(iso)?'<div class="cal-item" style="--event-color:#163b72">8 classes + lunch</div>':'';
+          const itemLimit=isSchoolDay(iso)?3:4;
+          cells.push(`<div class="day-cell ${outside?'outside':''} ${iso===localISO()?'today':''}" data-calendar-date="${iso}"><div class="day-number"><span>${d.getDate()}</span>${iso===state.school.start?'<span class="pill blue">First</span>':iso===state.school.end?'<span class="pill red">Last</span>':''}</div>${schoolSummary}${items.slice(0,itemLimit).map(x=>`<button class="cal-item" style="--event-color:${x.color}" data-calendar-item="${esc(x.data.id)}" data-kind="${x.kind}">${esc(x.title)}</button>`).join('')}${items.length>itemLimit?`<small>+${items.length-itemLimit} more</small>`:''}</div>`);
         }
         content=`<div class="month-grid">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="weekday">${x}</div>`).join('')}${cells.join('')}</div>`;
       } else if(calendarView==='week'){
         const start=startOfWeek(calendarCursor), days=[];
-        for(let i=0;i<7;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const iso=toISO(d), items=itemsForDate(iso); days.push(`<div class="week-day ${iso===localISO()?'today':''}"><h4>${fmt(iso,{weekday:'short',month:'short',day:'numeric'})}</h4><div class="day-agenda">${items.length?items.map(x=>`<button class="cal-item" style="--event-color:${x.color}" data-calendar-item="${esc(x.data.id)}" data-kind="${x.kind}">${x.time?humanTime(x.time)+' ':''}${esc(x.title)}</button>`).join(''):empty('Open','No items')}</div></div>`); }
+        for(let i=0;i<7;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const iso=toISO(d), items=itemsForDate(iso), schoolSummary=isSchoolDay(iso)?'<div class="cal-item" style="--event-color:#163b72">8 classes + lunch - click for full day</div>':''; days.push(`<div class="week-day ${iso===localISO()?'today':''}" data-calendar-date="${iso}"><h4>${fmt(iso,{weekday:'short',month:'short',day:'numeric'})}</h4><div class="day-agenda">${schoolSummary}${items.length?items.map(x=>`<button class="cal-item" style="--event-color:${x.color}" data-calendar-item="${esc(x.data.id)}" data-kind="${x.kind}">${x.time?humanTime(x.time)+' ':''}${esc(x.title)}</button>`).join(''):schoolSummary?'':empty('Open','No items')}</div></div>`); }
         content=`<div class="week-grid">${days.join('')}</div>`;
       } else {
         const iso=toISO(calendarCursor), items=itemsForDate(iso);
-        content=`<div class="grid two"><div class="card card-pad"><div class="card-title"><div><h3>Classes</h3><p>${esc(dayType(iso))}</p></div></div><div class="schedule-list">${scheduleRows(iso)}</div></div><div class="card card-pad"><div class="card-title"><div><h3>Assignments & events</h3><p>${items.length} item${items.length===1?'':'s'}</p></div></div><div class="day-agenda">${items.length?items.map(x=>x.kind==='event'?eventCard(x.data):compactAssignment(x.data)).join(''):empty('Open day','Nothing is due or scheduled.')}</div></div></div>`;
+        content=`<div class="grid two"><div class="card card-pad"><div class="card-title"><div><h3>Complete class schedule</h3><p>${isSchoolDay(iso)?'8 classes + lunch · '+esc(dayType(iso)):'No regular class schedule'}</p></div></div><div class="schedule-list">${scheduleRows(iso)}</div></div><div class="card card-pad"><div class="card-title"><div><h3>Assignments & activities</h3><p>${items.length} additional item${items.length===1?'':'s'}</p></div></div><div class="day-agenda">${items.length?items.map(x=>x.kind==='event'?eventCard(x.data):compactAssignment(x.data)).join(''):empty('No additional activities','The class schedule is the only saved activity for this day.')}</div></div></div>`;
       }
       document.getElementById('calendar').innerHTML=`<div class="page-head"><div><h2>Calendar</h2><p>Daily, weekly, and monthly plans in one place.</p></div><button class="btn" data-open-event>＋ Add event</button></div><div class="card card-pad"><div class="calendar-toolbar"><div><button class="btn small secondary" data-cal-nav="-1">‹</button> <button class="btn small secondary" data-cal-today>Today</button> <button class="btn small secondary" data-cal-nav="1">›</button></div><h3>${esc(label)}</h3><div class="segmented">${['day','week','month'].map(v=>`<button data-cal-view="${v}" class="${calendarView===v?'active':''}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div></div>${content}</div>`;
     }
@@ -621,7 +623,7 @@
       document.querySelectorAll('[data-cal-view]').forEach(b=>b.onclick=()=>{calendarView=b.dataset.calView;renderCalendar();bindDynamic();});
       document.querySelectorAll('[data-cal-nav]').forEach(b=>b.onclick=()=>moveCalendar(Number(b.dataset.calNav)));
       document.querySelectorAll('[data-cal-today]').forEach(b=>b.onclick=()=>{calendarCursor=parseDate(localISO());renderCalendar();bindDynamic();});
-      document.querySelectorAll('[data-calendar-date]').forEach(b=>b.ondblclick=()=>openEventModal(null,b.dataset.calendarDate));
+      document.querySelectorAll('[data-calendar-date]').forEach(b=>b.onclick=()=>{calendarCursor=parseDate(b.dataset.calendarDate);calendarView='day';renderCalendar();bindDynamic();});
       document.querySelectorAll('[data-calendar-item]').forEach(b=>b.onclick=e=>{e.stopPropagation(); if(b.dataset.kind==='assignment')openAssignmentModal(b.dataset.calendarItem); else openEventModal(b.dataset.calendarItem);});
       const q=document.getElementById('quickAddForm'); if(q)q.onsubmit=quickAdd;
       const ss=document.getElementById('studySessionForm'); if(ss)ss.onsubmit=addStudySession;
