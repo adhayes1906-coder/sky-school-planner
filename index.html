@@ -312,7 +312,7 @@
     const STORAGE_KEY = 'sky-school-planner-v1';
     const SCHOOL_START = '2026-08-10';
     const SCHOOL_END = '2027-05-26';
-    const GRADING_POLICY_VERSION = 'rawlinson-syllabus-weights-2026-v2';
+    const GRADING_POLICY_VERSION = 'rawlinson-syllabus-weights-2026-v3';
     const classDefaults = [
       {id:'band',period:1,name:'Beginner Band',bName:'Beginner Band',room:'F101',teacher:'Medariaga Santos',start:'08:35',end:'09:20',color:'#2f6fed',weights:{formative:50,summative:50},gradingPolicy:{type:'formative-summative',formative:50,summative:50,source:'Rawlinson Band syllabus'},goal:90},
       {id:'art',period:2,name:'Art 2 MS',bName:'Art 2 MS',room:'B123',teacher:'Coker',start:'09:24',end:'10:14',color:'#b65b19',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
@@ -321,7 +321,7 @@
       {id:'ela5',period:5,name:'Advanced ELA 7',bName:'Advanced ELA 7',room:'C221',teacher:'Leigh-Gomez',start:'12:30',end:'13:25',color:'#cf3b67',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
       {id:'history',period:6,name:'Advanced Texas History 7',bName:'Advanced Texas History 7',room:'C213',teacher:'Canter',start:'13:29',end:'14:14',color:'#008a9a',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
       {id:'math',period:7,name:'Advanced Math 7',bName:'Advanced Math 7',room:'B210',teacher:'Pisano',start:'14:18',end:'15:03',color:'#d58a00',weights:{formative:40,summative:60},gradingPolicy:{type:'formative-summative',formative:40,summative:60,source:'Ms. Pisano 7th Grade Advanced Math syllabus'},goal:90},
-      {id:'pe',period:8,name:'PE 7 / Athletics (Boys)',bName:'PE 7 / Athletics (Boys)',room:'E101',teacher:'Diaz',start:'15:07',end:'15:55',color:'#a62126',weights:{homework:20,quiz:20,test:35,project:25},goal:85}
+      {id:'pe',period:8,name:'PE 7 / Athletics (Boys)',bName:'PE 7 / Athletics (Boys)',room:'E101',teacher:'Diaz',start:'15:07',end:'15:55',color:'#a62126',weights:{formative:50,summative:50},gradingPolicy:{type:'formative-summative',formative:50,summative:50,source:'Rawlinson Boys Athletics syllabus'},goal:85}
     ];
     const TUTORING_HOURS = [
       {classId:'band',teacher:'Mrs. Cyr & Mr. Santos',room:'F101 / Band Hall',source:'Rawlinson Band syllabus',sessions:[
@@ -364,9 +364,10 @@
 
     function clone(v){ return JSON.parse(JSON.stringify(v)); }
     function applyKnownGradingPolicy(classes=[]){
-      const list=Array.isArray(classes)?clone(classes):clone(classDefaults),math=list.find(c=>c.id==='math'),band=list.find(c=>c.id==='band');
+      const list=Array.isArray(classes)?clone(classes):clone(classDefaults),math=list.find(c=>c.id==='math'),band=list.find(c=>c.id==='band'),pe=list.find(c=>c.id==='pe');
       if(math){math.weights={formative:40,summative:60};math.gradingPolicy={type:'formative-summative',formative:40,summative:60,source:'Ms. Pisano 7th Grade Advanced Math syllabus'};}
       if(band){band.weights={formative:50,summative:50};band.gradingPolicy={type:'formative-summative',formative:50,summative:50,source:'Rawlinson Band syllabus'};}
+      if(pe){pe.weights={formative:50,summative:50};pe.gradingPolicy={type:'formative-summative',formative:50,summative:50,source:'Rawlinson Boys Athletics syllabus'};}
       return list;
     }
     function loadState(){
