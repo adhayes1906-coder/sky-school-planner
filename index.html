@@ -268,6 +268,7 @@
         <button data-page="assignments"><span class="nav-icon">✓</span> Assignments</button>
         <button data-page="schedule"><span class="nav-icon">◷</span> Schedule</button>
         <button data-page="study"><span class="nav-icon">◎</span> Study</button>
+        <button data-page="tutoring"><span class="nav-icon">?</span> Tutoring Hours</button>
         <button data-page="grades"><span class="nav-icon">A</span> Grades</button>
         <button data-page="routines"><span class="nav-icon">☑</span> Routines</button>
         <button data-page="settings"><span class="nav-icon">⚙</span> Settings</button>
@@ -283,6 +284,7 @@
         <section class="page" id="assignments"></section>
         <section class="page" id="schedule"></section>
         <section class="page" id="study"></section>
+        <section class="page" id="tutoring"></section>
         <section class="page" id="grades"></section>
         <section class="page" id="routines"></section>
         <section class="page" id="settings"></section>
@@ -310,9 +312,9 @@
     const STORAGE_KEY = 'sky-school-planner-v1';
     const SCHOOL_START = '2026-08-10';
     const SCHOOL_END = '2027-05-26';
-    const GRADING_POLICY_VERSION = 'rawlinson-syllabus-weights-2026-v1';
+    const GRADING_POLICY_VERSION = 'rawlinson-syllabus-weights-2026-v2';
     const classDefaults = [
-      {id:'band',period:1,name:'Beginner Band',bName:'Beginner Band',room:'F101',teacher:'Medariaga Santos',start:'08:35',end:'09:20',color:'#2f6fed',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
+      {id:'band',period:1,name:'Beginner Band',bName:'Beginner Band',room:'F101',teacher:'Medariaga Santos',start:'08:35',end:'09:20',color:'#2f6fed',weights:{formative:50,summative:50},gradingPolicy:{type:'formative-summative',formative:50,summative:50,source:'Rawlinson Band syllabus'},goal:90},
       {id:'art',period:2,name:'Art 2 MS',bName:'Art 2 MS',room:'B123',teacher:'Coker',start:'09:24',end:'10:14',color:'#b65b19',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
       {id:'science',period:3,name:'Advanced Science 7',bName:'Advanced Science 7',room:'B218',teacher:'Speelman',start:'10:18',end:'11:03',color:'#8c4bc0',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
       {id:'ela',period:4,name:'Advanced ELA 7',bName:'Advanced ELA 7',room:'C221',teacher:'Leigh-Gomez',start:'11:07',end:'11:52',color:'#cf3b67',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
@@ -320,6 +322,15 @@
       {id:'history',period:6,name:'Advanced Texas History 7',bName:'Advanced Texas History 7',room:'C213',teacher:'Canter',start:'13:29',end:'14:14',color:'#008a9a',weights:{homework:20,quiz:20,test:35,project:25},goal:90},
       {id:'math',period:7,name:'Advanced Math 7',bName:'Advanced Math 7',room:'B210',teacher:'Pisano',start:'14:18',end:'15:03',color:'#d58a00',weights:{formative:40,summative:60},gradingPolicy:{type:'formative-summative',formative:40,summative:60,source:'Ms. Pisano 7th Grade Advanced Math syllabus'},goal:90},
       {id:'pe',period:8,name:'PE 7 / Athletics (Boys)',bName:'PE 7 / Athletics (Boys)',room:'E101',teacher:'Diaz',start:'15:07',end:'15:55',color:'#a62126',weights:{homework:20,quiz:20,test:35,project:25},goal:85}
+    ];
+    const TUTORING_HOURS = [
+      {classId:'band',teacher:'Mrs. Cyr & Mr. Santos',room:'F101 / Band Hall',source:'Rawlinson Band syllabus',sessions:[
+        {days:'Monday–Friday',time:'7:30–8:30 AM',note:'Morning tutoring'},
+        {days:'Monday, Wednesday, Thursday & Friday',time:'4:05–5:30 PM',note:'No after-school tutoring on Tuesdays'}
+      ]},
+      {classId:'math',teacher:'Ms. Isabel Pisano',room:'B210',source:'7th Grade Advanced Math syllabus',sessions:[
+        {days:'Tuesday & Thursday',time:'7:50–8:30 AM',note:'Morning tutoring'}
+      ]}
     ];
     const defaultState = {
       profile:{name:'Sky',grade:'7th Grade',school:'Rawlinson Middle School',district:'Northside Independent School District'},
@@ -353,8 +364,9 @@
 
     function clone(v){ return JSON.parse(JSON.stringify(v)); }
     function applyKnownGradingPolicy(classes=[]){
-      const list=Array.isArray(classes)?clone(classes):clone(classDefaults),math=list.find(c=>c.id==='math');
+      const list=Array.isArray(classes)?clone(classes):clone(classDefaults),math=list.find(c=>c.id==='math'),band=list.find(c=>c.id==='band');
       if(math){math.weights={formative:40,summative:60};math.gradingPolicy={type:'formative-summative',formative:40,summative:60,source:'Ms. Pisano 7th Grade Advanced Math syllabus'};}
+      if(band){band.weights={formative:50,summative:50};band.gradingPolicy={type:'formative-summative',formative:50,summative:50,source:'Rawlinson Band syllabus'};}
       return list;
     }
     function loadState(){
@@ -575,6 +587,12 @@
       <div class="grid dashboard"><div class="stack"><div class="card card-pad"><div class="card-title"><div><h3>Regular 7th-grade day</h3><p>Beginning bell 8:30 AM · ${esc(dayType(iso))}</p></div><span class="pill blue">8 periods</span></div><div class="schedule-list">${scheduleRows(state.school.start)}</div><div class="privacy-note" style="margin-top:12px"><strong>Announcements:</strong> 9:24–9:29 AM during 2nd period. <strong>Lunch:</strong> 11:56 AM–12:26 PM between 4th and 5th periods.</div></div></div>
       <aside class="stack"><div class="card card-pad"><div class="card-title"><div><h3>School year</h3><p>Important dates</p></div></div><div class="day-agenda"><div class="agenda-row" style="--event-color:var(--blue)"><strong>First day</strong><small>Monday, August 10, 2026</small></div><div class="agenda-row" style="--event-color:var(--red)"><strong>Last day</strong><small>Wednesday, May 26, 2027</small></div></div></div><div class="card card-pad"><div class="card-title"><div><h3>Optional A/B schedule</h3><p>Sky's supplied schedule is set to Standard.</p></div></div><p style="color:var(--muted);font-size:.83rem">If Rawlinson begins using alternating days, switch to A/B in Settings and enter the B-day class names. The planner will alternate school days automatically.</p><button class="btn small secondary" data-page-jump="settings">Edit schedule</button></div></aside></div>`;
     }
+    function renderTutoring(){
+      const covered=new Set(TUTORING_HOURS.map(x=>x.classId));
+      const cards=TUTORING_HOURS.map(item=>{const c=classById(item.classId);return `<div class="card card-pad" style="border-top:5px solid ${esc(c.color)}"><div class="card-title"><div><h3>${esc(c.name)}</h3><p>Period ${Number(c.period)} · ${esc(item.teacher)}</p></div><span class="pill blue">${esc(item.room)}</span></div><div class="day-agenda">${item.sessions.map(s=>`<div class="agenda-row" style="--event-color:${esc(c.color)}"><strong>${esc(s.days)}</strong><small>${esc(s.time)} · ${esc(s.note)}</small></div>`).join('')}</div><div class="privacy-note" style="margin-top:12px">Source: ${esc(item.source)}</div></div>`;}).join('');
+      const missing=state.classes.filter(c=>!c.isLunch&&!covered.has(c.id));
+      document.getElementById('tutoring').innerHTML=`<div class="page-head"><div><h2>Tutoring Hours</h2><p>Teacher support times from the supplied 2026–27 syllabi.</p></div><button class="btn secondary" onclick="window.print()">Print</button></div><div class="grid two">${cards}</div><div class="card card-pad" style="margin-top:16px"><div class="card-title"><div><h3>No hours supplied yet</h3><p>These classes did not have an attached tutoring schedule.</p></div></div><div class="meta" style="display:flex;flex-wrap:wrap;gap:8px">${missing.length?missing.map(c=>`<span class="pill">P${Number(c.period)} · ${esc(c.name)}</span>`).join(''):'<span class="pill green">All class tutoring schedules supplied</span>'}</div><div class="privacy-note" style="margin-top:12px">Check with the teacher before attending. Tutoring schedules may change during the school year.</div></div>`;
+    }
     function renderStudy(){
       const tests=sortedAssignments(state.assignments.filter(a=>!a.completed&&['test','quiz','project','presentation'].includes(a.type)&&a.dueDate>=localISO()));
       const links=state.studyLinks||[];
@@ -629,10 +647,10 @@
       <div class="stack"><div class="settings-section"><h3>Reminders</h3><label>Reminder time<input type="time" id="reminderTime" value="${esc(s.reminderTime)}"></label><label style="margin-top:10px">Default days before due<select id="defaultReminderDays"><option value="0" ${s.defaultReminderDays==0?'selected':''}>Same day</option><option value="1" ${s.defaultReminderDays==1?'selected':''}>1 day</option><option value="2" ${s.defaultReminderDays==2?'selected':''}>2 days</option><option value="3" ${s.defaultReminderDays==3?'selected':''}>3 days</option><option value="5" ${s.defaultReminderDays==5?'selected':''}>5 days</option><option value="7" ${s.defaultReminderDays==7?'selected':''}>7 days</option></select></label><button class="btn wide" id="enableNotifications" style="margin-top:12px">Enable browser notifications</button><p style="font-size:.72rem;color:var(--muted)">Notifications are checked while the planner is open. Browser permission is required.</p></div><div class="settings-section"><h3>Class schedule options</h3><label>Schedule type<select id="rotationMode"><option value="standard" ${state.school.rotationMode==='standard'?'selected':''}>Standard day</option><option value="ab" ${state.school.rotationMode==='ab'?'selected':''}>Alternating A/B days</option></select></label><p style="font-size:.74rem;color:var(--muted)">The supplied schedule is a standard day. B-day names can be different if Rawlinson later provides an A/B schedule.</p></div></div></div>
       <div class="settings-section" style="margin-top:16px"><div class="card-title"><div><h3>Edit Sky's classes</h3><p>A-day/default name, optional B-day name, room, teacher, and color.</p></div></div><form id="scheduleEditor" class="schedule-editor">${state.classes.map(c=>`<div class="editor-row"><div class="period-num">P${c.period}</div><label>A / default<input name="name-${c.id}" value="${esc(c.name)}" required></label><label>B-day<input name="bName-${c.id}" value="${esc(c.bName||c.name)}"></label><label>Room<input name="room-${c.id}" value="${esc(c.room)}"></label><label>Teacher<input name="teacher-${c.id}" value="${esc(c.teacher)}"></label><label>Color<input class="color-input" type="color" name="color-${c.id}" value="${esc(c.color)}"></label></div>`).join('')}<button class="btn">Save schedule changes</button></form></div>`;
     }
-    function renderAll(){ renderToday(); renderCalendar(); renderAssignments(); renderSchedule(); renderStudy(); renderGrades(); renderRoutines(); renderSettings(); bindDynamic(); }
+    function renderAll(){ renderToday(); renderCalendar(); renderAssignments(); renderSchedule(); renderStudy(); renderTutoring(); renderGrades(); renderRoutines(); renderSettings(); bindDynamic(); }
     function showPage(page){
       activePage=page; document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page)); document.querySelectorAll('.nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
-      if(page==='calendar')renderCalendar(); if(page==='assignments')renderAssignments(); if(page==='study')renderStudy(); if(page==='grades')renderGrades(); if(page==='routines')renderRoutines(); if(page==='settings')renderSettings(); bindDynamic(); window.scrollTo({top:0,behavior:'smooth'});
+      if(page==='calendar')renderCalendar(); if(page==='assignments')renderAssignments(); if(page==='study')renderStudy(); if(page==='tutoring')renderTutoring(); if(page==='grades')renderGrades(); if(page==='routines')renderRoutines(); if(page==='settings')renderSettings(); bindDynamic(); window.scrollTo({top:0,behavior:'smooth'});
     }
     function bindDynamic(){
       document.querySelectorAll('[data-open-assignment]').forEach(b=>b.onclick=()=>openAssignmentModal());
