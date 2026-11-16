@@ -246,6 +246,8 @@
       .page.active { display:block !important; }
       .card { box-shadow:none; break-inside:avoid; }
     }
+  
+    .hac-list{display:grid;gap:10px;margin-top:12px}.hac-item{padding:12px;border:1px solid var(--line);border-left:4px solid #b42318;border-radius:10px;overflow-wrap:anywhere}.hac-item strong,.hac-item small{display:block}.hac-item small{margin-top:5px}.hac-item .meta{margin-top:8px}.hac-note{font-size:13px;color:var(--muted);line-height:1.6}.hac-pending{margin-top:16px}.hac-pending .hac-item{border-left-color:#b88212}
   </style>
 </head>
 <body>
@@ -488,6 +490,35 @@
       const days=new Set(state.assignments.filter(a=>a.completed&&a.completedDate).map(a=>a.completedDate)); let streak=0, d=localISO();
       while(days.has(d)){ streak++; d=addDays(d,-1); } return streak;
     }
+    // HAC review is shared by the four planners on this GitHub Pages origin.
+    function hacReviewOnly(review){
+      if(!review||!Array.isArray(review.items))return null;
+      const fields=['id','child','classId','course','courseCode','title','dueDate','score','max','status','source','observedAt','markingPeriod','average'];
+      const clean=item=>Object.fromEntries(fields.filter(k=>Object.hasOwn(item,k)).map(k=>[k,item[k]]));
+      return {version:1,reviewedAt:review.reviewedAt,coverage:'Home Access Center review',items:review.items.filter(x=>x.source==='HAC').map(clean),courseAverages:(review.courseAverages||[]).filter(x=>x.source==='HAC').map(clean)};
+    }
+    function hacFindings(review,child,today=localISO()){
+      const items=[];
+      for(const x of review?.items||[]){
+        if(x.source!=='HAC'||x.child!==child)continue;
+        const percent=x.score!==null&&x.score!==undefined&&String(x.score).trim()!==''&&Number.isFinite(Number(x.score))&&Number(x.max)>0?Number(x.score)/Number(x.max)*100:null;
+        const kind=x.status==='graded'&&percent!==null&&percent<70?'low':x.status==='missing'&&x.dueDate<=today?'missing':x.status==='ungraded'&&x.dueDate<today?'ungraded':null;
+        if(kind)items.push({...x,key:child,kind,percent});
+      }
+      for(const x of review?.courseAverages||[])if(x.source==='HAC'&&x.child===child&&x.average!==null&&String(x.average).trim()!==''&&Number.isFinite(Number(x.average))&&Number(x.average)<70)items.push({...x,key:child,title:'Course average',kind:'average',percent:Number(x.average)});
+      const order={average:0,missing:1,low:2,ungraded:3};
+      return items.sort((a,b)=>order[a.kind]-order[b.kind]||(a.dueDate||'').localeCompare(b.dueDate||'')||a.title.localeCompare(b.title));
+    }
+    const HAC_CHILD = 'sky';
+
+    function plannerHacSection(){
+      let saved={};try{saved=JSON.parse(localStorage.getItem('hayes-parent-school-dashboard-v1'))||{};}catch(e){}
+      const review=hacReviewOnly(saved.gradeReview),all=hacFindings(review,HAC_CHILD),items=all.filter(x=>x.kind!=='ungraded'),pending=all.filter(x=>x.kind==='ungraded');
+      const low=items.filter(x=>x.kind==='low').length,missing=items.filter(x=>x.kind==='missing').length,averages=items.filter(x=>x.kind==='average').length;
+      const row=x=>`<article class="hac-item"><strong>${esc(x.title)}</strong><small>${esc(x.course)}${x.dueDate?' · Due '+esc(fmt(x.dueDate)):''}</small><div class="meta"><span class="pill ${x.kind==='ungraded'?'gold':'red'}">${x.kind==='average'?'Course average '+x.percent.toFixed(1)+'%':x.kind==='low'?Number(x.score)+'/'+Number(x.max)+' · '+x.percent.toFixed(1)+'%':x.kind==='missing'?'Missing assignment':'Grade not posted'}</span><a href="https://hac.nisd.net/HomeAccess/Classes/Classwork" target="_blank" rel="noopener">View in HAC ↗</a></div></article>`;
+      return `<section class="card card-pad" id="hacNeedsAttention"><div class="card-title"><div><h3>Needs attention</h3><p>Home Access Center · grades below 70% and missing assignments</p></div><span class="pill ${items.length?'red':'green'}">${items.length} items</span></div><p><strong>${low} low grades · ${missing} missing assignments · ${averages} low course averages</strong></p><p class="hac-note">${review?'Reviewed '+esc(new Date(review.reviewedAt).toLocaleString())+'. This is a saved HAC review; it does not refresh automatically.':'No HAC review saved in this browser yet.'} <a href="../hayes-parent-school-dashboard/">Open parent dashboard</a> to import an updated HAC review. Reviews are shared across all four apps in this browser.</p><div class="hac-list">${items.length?items.map(row).join(''):empty(review?'No low or missing grades in this review':'HAC review needed',review?'Only HAC scores below 70% and assignments marked missing are flagged.':'Import the HAC review in the parent dashboard.')}</div>${pending.length?`<details class="hac-pending"><summary>Grades not posted (${pending.length})</summary><p class="hac-note">HAC has no score for these past-due entries. A blank score does not confirm that work is missing.</p><div class="hac-list">${pending.map(row).join('')}</div></details>`:''}</section>`;
+    }
+
     function renderToday(){
       const today=localISO(), quickDue=today<state.school.start?state.school.start:today, incomplete=state.assignments.filter(a=>!a.completed);
       const priorities=[...incomplete].sort((a,b)=>homeworkScore(b)-homeworkScore(a)).slice(0,3);
@@ -502,6 +533,7 @@
         <div class="grid dashboard">
           <div class="stack">
             <div class="card hero"><div class="hero-grid"><div><p class="eyebrow">${esc(fmtLong(today))}</p><h2>${today<state.school.start?'Ready for 7th grade, Sky?':'Here is your plan, Sky.'}</h2><p>${esc(schoolStatus)}. Your top work and schedule are organized below.</p></div><div class="date-badge"><span class="small">${esc(fmt(today,{month:'long'}))}</span><span class="big">${parseDate(today).getDate()}</span><span class="small">${esc(fmt(today,{weekday:'long'}))}</span></div></div></div>
+            ${plannerHacSection()}
             <div class="card card-pad">
               <div class="card-title"><div><h3>Quick assignment</h3><p>Title, class, due date, and time—done in seconds.</p></div><span class="pill blue">Under 20 sec</span></div>
               <form class="quick-add" id="quickAddForm">
@@ -760,8 +792,10 @@
     document.getElementById('closeCelebration').onclick=()=>document.getElementById('celebration').classList.remove('show');
     document.getElementById('importInput').onchange=e=>{if(e.target.files[0])importData(e.target.files[0]);};
     document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();document.body.classList.remove('study-mode');}});
+    window.addEventListener('storage',e=>{if(e.key==='hayes-parent-school-dashboard-v1'){renderToday();bindDynamic();}});
     autoRoll();applySettings();renderAll();checkNotifications();setInterval(checkNotifications,60000);
   })();
   </script>
 </body>
 </html>
+
