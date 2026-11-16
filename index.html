@@ -328,14 +328,100 @@
       {id:'pe',period:8,name:'PE 7 / Athletics (Boys)',bName:'PE 7 / Athletics (Boys)',room:'E101',teacher:'Diaz',start:'15:07',end:'15:55',color:'#a62126',weights:{formative:50,summative:50},gradingPolicy:{type:'formative-summative',formative:50,summative:50,source:'Rawlinson Boys Athletics syllabus'},goal:85}
     ];
     const TUTORING_HOURS = [
-      {classId:'band',teacher:'Mrs. Cyr & Mr. Santos',room:'F101 / Band Hall',source:'Rawlinson Band syllabus',sessions:[
-        {days:'Monday–Friday',time:'7:30–8:30 AM',note:'Morning tutoring'},
-        {days:'Monday, Wednesday, Thursday & Friday',time:'4:05–5:30 PM',note:'No after-school tutoring on Tuesdays'}
-      ]},
-      {classId:'math',teacher:'Ms. Isabel Pisano',room:'B210',source:'7th Grade Advanced Math syllabus',sessions:[
-        {days:'Tuesday & Thursday',time:'7:50–8:30 AM',note:'Morning tutoring'}
-      ]}
-    ];
+  {
+    "classId": "band",
+    "teacher": "Mrs. Cyr & Mr. Santos",
+    "room": "F101 / Band Hall",
+    "source": "Rawlinson Band syllabus",
+    "sessions": [
+      {
+        "days": "Monday–Friday",
+        "time": "7:30–8:30 AM",
+        "note": "Morning tutoring"
+      },
+      {
+        "days": "Monday, Wednesday, Thursday & Friday",
+        "time": "4:05–5:30 PM",
+        "note": "No after-school tutoring on Tuesdays"
+      }
+    ]
+  },
+  {
+    "classId": "math",
+    "teacher": "Ms. Isabel Pisano",
+    "room": "B210",
+    "source": "7th Grade Advanced Math syllabus",
+    "sessions": [
+      {
+        "days": "Tuesday & Thursday",
+        "time": "7:50–8:30 AM",
+        "note": "Morning tutoring"
+      }
+    ]
+  },
+  {
+    "classId": "art",
+    "teacher": "Bridgette Coker (Sky’s teacher)",
+    "room": "B123",
+    "source": "Bridgette Coker Art 2 syllabus",
+    "sessions": [
+      {
+        "days": "Thursday",
+        "time": "7:50–8:30 AM",
+        "note": "Morning tutoring"
+      }
+    ]
+  },
+  {
+    "classId": "science",
+    "teacher": "Mrs. Speelman (Sky’s teacher)",
+    "room": "B218",
+    "source": "Speelman Meet the Teacher · tutoring slide (page 7)",
+    "sessions": [
+      {
+        "days": "Monday",
+        "time": "8:00–8:30 AM",
+        "note": "Morning tutoring; summative assessments must be completed with your own teacher"
+      },
+      {
+        "days": "By appointment",
+        "time": "Arrange with teacher",
+        "note": "Contact Mrs. Speelman for an appointment"
+      }
+    ]
+  },
+  {
+    "classId": "science",
+    "teacher": "Mrs. Easter (additional 7th-grade science support)",
+    "room": "C219",
+    "source": "Speelman Meet the Teacher · tutoring slide (page 7)",
+    "sessions": [
+      {
+        "days": "Tuesday & Wednesday",
+        "time": "8:00–8:30 AM",
+        "note": "Additional science tutoring; summative assessments must be completed with Mrs. Speelman"
+      }
+    ]
+  },
+  {
+    "classId": "science",
+    "teacher": "Mrs. Corcoran (additional 7th-grade science support)",
+    "room": "C222",
+    "source": "Speelman Meet the Teacher · tutoring slide (page 7)",
+    "sessions": [
+      {
+        "days": "Friday",
+        "time": "After school (clock time not supplied)",
+        "note": "Additional science tutoring; summative assessments must be completed with Mrs. Speelman"
+      },
+      {
+        "days": "By appointment",
+        "time": "Arrange with teacher",
+        "note": "Contact Mrs. Corcoran for an appointment"
+      }
+    ]
+  }
+];
     const defaultState = {
       profile:{name:'Sky',grade:'7th Grade',school:'Rawlinson Middle School',district:'Northside Independent School District'},
       school:{start:SCHOOL_START,end:SCHOOL_END,rotationMode:'standard'},
@@ -644,7 +730,7 @@
       const covered=new Set(TUTORING_HOURS.map(x=>x.classId));
       const cards=TUTORING_HOURS.map(item=>{const c=classById(item.classId);return `<div class="card card-pad" style="border-top:5px solid ${esc(c.color)}"><div class="card-title"><div><h3>${esc(c.name)}</h3><p>Period ${Number(c.period)} · ${esc(item.teacher)}</p></div><span class="pill blue">${esc(item.room)}</span></div><div class="day-agenda">${item.sessions.map(s=>`<div class="agenda-row" style="--event-color:${esc(c.color)}"><strong>${esc(s.days)}</strong><small>${esc(s.time)} · ${esc(s.note)}</small></div>`).join('')}</div><div class="privacy-note" style="margin-top:12px">Source: ${esc(item.source)}</div></div>`;}).join('');
       const missing=state.classes.filter(c=>!c.isLunch&&!covered.has(c.id));
-      document.getElementById('tutoring').innerHTML=`<div class="page-head"><div><h2>Tutoring Hours</h2><p>Teacher support times from the supplied 2026–27 syllabi.</p></div><button class="btn secondary" onclick="window.print()">Print</button></div><div class="grid two">${cards}</div><div class="card card-pad" style="margin-top:16px"><div class="card-title"><div><h3>No hours supplied yet</h3><p>These classes did not have an attached tutoring schedule.</p></div></div><div class="meta" style="display:flex;flex-wrap:wrap;gap:8px">${missing.length?missing.map(c=>`<span class="pill">P${Number(c.period)} · ${esc(c.name)}</span>`).join(''):'<span class="pill green">All class tutoring schedules supplied</span>'}</div><div class="privacy-note" style="margin-top:12px">Check with the teacher before attending. Tutoring schedules may change during the school year.</div></div>`;
+      document.getElementById('tutoring').innerHTML=`<div class="page-head"><div><h2>Tutoring Hours</h2><p>Teacher support times from the supplied syllabi and teacher updates. Science team tutors are labeled separately.</p></div><button class="btn secondary" onclick="window.print()">Print</button></div><div class="grid two">${cards}</div><div class="card card-pad" style="margin-top:16px"><div class="card-title"><div><h3>No hours supplied yet</h3><p>These classes did not have an attached tutoring schedule.</p></div></div><div class="meta" style="display:flex;flex-wrap:wrap;gap:8px">${missing.length?missing.map(c=>`<span class="pill">P${Number(c.period)} · ${esc(c.name)}</span>`).join(''):'<span class="pill green">All class tutoring schedules supplied</span>'}</div><div class="privacy-note" style="margin-top:12px">Check with the teacher before attending. Tutoring schedules may change during the school year.</div></div>`;
     }
     function renderStudy(){
       const tests=sortedAssignments(state.assignments.filter(a=>!a.completed&&['test','quiz','project','presentation'].includes(a.type)&&a.dueDate>=localISO()));
